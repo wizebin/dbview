@@ -71,7 +71,7 @@ function executeMYSQL($db, $query){
 	return $result;
 }
 function executePGSQL($db, $query){
-	$result = pg_query($db,$statement);
+	$result = pg_query($db,$query);
     if($result==null){
 		noteError("Failed To Execute PGSQL: ".pg_last_error($db));
 		return $result;
@@ -82,9 +82,9 @@ function executePGSQL($db, $query){
 		array_push($ret,$lastres);
 		$lastres = pg_fetch_array($result, null, PGSQL_ASSOC);
 	}
+	$lastaffected = pg_affected_rows($result);
+	$lastid = pg_last_oid($result);
 	pg_free_result($result);
-	$lastaffected = pg_affected_rows($db);
-	$lastid = pg_last_oid($db);
     return $ret; 
 }
 function executeMSSQL($db, $query){
@@ -196,9 +196,9 @@ function executePreparedPGSQL($db, $prepared, $params){
 		array_push($ret,$lastres);
 		$lastres = pg_fetch_array($result, null, PGSQL_ASSOC);
 	}
+	$lastaffected = pg_affected_rows($result);
+	$lastid = pg_last_oid($result);
 	pg_free_result($result);
-	$lastaffected = pg_affected_rows($db);
-	$lastid = pg_last_oid($db);
     return $ret; 
 }
 function executePreparedMSSQL($db, $prepared, $params){
@@ -349,7 +349,11 @@ function describeTableMSSQL($db, $table){
 
 }
 
-
+function safeFilename($pageName){
+	$ret = preg_replace('/[^a-zA-Z_\- \.]/',"",$pageName);
+	if ($ret=='.' || $ret == '..') return '';
+	return $ret;
+}
 function sendpost($url, $content){
 	$curl = curl_init($url);
 	curl_setopt($curl, CURLOPT_HEADER, false);

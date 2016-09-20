@@ -1,8 +1,8 @@
 <?php
 	include("../php_no_public/basics.php");
 	
-	function getMS(){
-		return round(microtime(true) * 1000);
+	function getNS(){
+		return round(microtime(true) * 100000);
 	}
 	function makeMessage($message, $depth=0){
 		$ret = "";
@@ -13,6 +13,9 @@
 			}
 			$ret .= "</table>";
 			return $ret;
+		}
+		if (gettype($message)=='boolean'){
+			return $message?'true':'false';
 		}
 		else{
 			if ($depth==0){
@@ -29,7 +32,7 @@
 	}
 	
 	function simpleTest($phpcode, $assertion, $operator = "=="){
-		$startTime = getMS();
+		$startTime = getNS();
 		try{
 			//notify("<hr /><p>INITIATING " . $phpcode . "</p>");
 			eval("\$result = ". $phpcode);
@@ -38,11 +41,11 @@
 			notify("TEST $phpcode == $assertion FAILED : " . $err);
 		}
 		eval("\$res = (\$result $operator \$assertion);");
-		$endTime = getMS();
+		$endTime = getNS();
 		
 		$duration = $endTime - $startTime;
 		
-		notify("<hr /><h3>$phpcode</h3> <div style=\"font-weight:bold;\">" . ($res?'<span style="color:#0f0;">SUCCESS</span>':'<span style="color:#f00;">FAILURE</span>'). "</div><div>TIME : $duration ms</div>");
+		notify("<hr /><h3>$phpcode <span style=\"background-color:#333;color:#fff;padding:0px 10px;display:inline-block;\">$operator</span> <span style=\"opacity:.5\">".json_encode($assertion)."</span></h3> <div style=\"font-weight:bold;\">" . ($res?'<span style="color:#0f0;">SUCCESS</span>':'<span style="color:#f00;">FAILURE</span>'). "</div><div>TIME : $duration ns</div>");
 		if (!$res){
 			notify("<div style=\"background-color:#aaa;padding:10px;\"><div style=\"font-weight:bold;\">RESULTS</div>". makeMessage($result) . "</div>");
 			notify("<div style=\"background-color:#aaa;padding:10px;\"><div style=\"font-weight:bold;\">SHOULD BE</div>". makeMessage($assertion) . "</div>");
@@ -62,7 +65,22 @@
 	include('../php_no_public/security.php');
 	
 	simpleTest("checkAdminLevel(0);",true);
+	simpleTest("checkAdminLevel(1);",false);
 	simpleTest("checkAdminLevel(1000);",false);
+	
+	simpleTest("safeFilename(\".\");","");
+	simpleTest("safeFilename(\"..\");","");
+	simpleTest("safeFilename(\"../\");","");
+	simpleTest("safeFilename(\"~/\");","");
+	simpleTest("safeFilename(\"page.php\");","page.php");
+	simpleTest("safeFilename(\"page name.backup\");","page name.backup");
+	
+	$username = 'stephen';
+	$password = 'jackofhearts';
+	
+	include('../php_no_public/conf.php');
+	
+	simpleTest("checkAdminLevel(1);",true);
 	
 	
 	

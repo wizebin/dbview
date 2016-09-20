@@ -1,6 +1,10 @@
 <?php 
-
+function makeCredentialQuery($user="?",$pass="?"){
+	global $credentialAdminColumn,$credentialDatabase,$credentialTable,$credentialUserColumn,$credentialPassColumn;
+	return "SELECT $credentialAdminColumn FROM $credentialTable WHERE $credentialUserColumn=$user AND $credentialPassColumn=$pass;";
+}
 function checkAdminLevel($requiredAdminLevel){
+	global $credentialAdminColumn,$credentialServerType,$credentialServer,$credentialUsername,$credentialPassword,$credentialDatabase,$credentialTable,$credentialUserColumn,$credentialPassColumn,$username,$password;
 	if ((!isset($requiredAdminLevel))||$requiredAdminLevel==null||$requiredAdminLevel==0){
 		return true;
 	}
@@ -8,10 +12,8 @@ function checkAdminLevel($requiredAdminLevel){
 		return false;
 	}
 	$db = openSQL($credentialServerType,$credentialServer,$credentialUsername,$credentialPassword,$credentialDatabase);
-	$username = '';
-	$password = '';
-	$qrey = "SELECT $credentialAdminColumn FROM $credentialDatabase.$credentialTable WHERE $credentialUserColumn=? AND $credentialPassColumn=?";
-	$exparams = array($credentialUsername, $credentialPassword);
+	$qrey = makeCredentialQuery();
+	$exparams = array($username, $password);
 	$prepared = prepareSQL($credentialServerType, $db, $qrey);
 	$results = executePreparedSQL($credentialServerType, $db, $prepared, $exparams);
 	if ($results != null && count($results)>0){

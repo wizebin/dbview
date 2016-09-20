@@ -26,14 +26,18 @@ include("basics.php");
 include("security.php");
 if($success){
 	if (isset($securityRequired) && $securityRequired>0){
+		$username=$params['username'];
+		$password=$params['password'];
 		$verified = checkAdminLevel($securityRequired);
 		if ($verified){
 			$success=true;
+			$ret['SECURED']=true;
 		}
 		else{
 			$success=false;
+			$ret['SECURED']=false;
 		}
-		$ret['SECURED']=true;
+		
 	}
 	else{
 		$ret['SECURED']=false;

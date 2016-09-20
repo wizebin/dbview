@@ -1,11 +1,35 @@
 <?php
 	include("../php_no_public/basics.php");
 	
-	$startTime = time();
-	$res = assert(makepgstring("127.0.0.1","username","password","database",777)=="host=127.0.0.1 user=username password=password dbname=database port=777 connect_timeout=5");
-	$endTime = time();
+	function getMS(){
+		return round(microtime(true) * 1000);
+	}
 	
-	$duration = $endTime - $startTime;
+	function simpleTest($phpcode, $assertion){
+		$startTime = getMS()
+		try{
+			eval("\$result = ". $phpcode);
+		}
+		catch($err){
+			echo("TEST $phpcode == $assertion FAILED : " . $err);
+		}
+		$res = assert($result==$assertion);
+		$endTime = getMS()
+		
+		$duration = $endTime - $startTime;
+		
+		echo("Testing $phpcode == $assertion RESULT : " . ($res?'success':'failure'). " TIME : $duration ms");
+	}
 	
-	echo("Testing postgres connection string creation RESULT : " . ($res?'success':'failure'). " TIME : $duration seconds");
+	simpleTest("makepgstring(\"127.0.0.1\",\"username\",\"password\",\"database\",777)", "host=127.0.0.1 user=username password=password dbname=database port=777 connect_timeout=5");
+	
+	simpleTest("getTypeLetter(\"Hello\")","s");
+	simpleTest("getTypeLetter(1)","i");
+	simpleTest("getTypeLetter(null)","s");
+	
+	simpleTest("makeTypeArray(array('hello',1,null)))",array('s','i','s'));
+	
+	
+	
+	
 ?>

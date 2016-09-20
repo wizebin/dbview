@@ -130,7 +130,7 @@ function getTypeLetter($intype){
 	}
 }
 function makeTypeArray($ray){
-	return map_array("getTypeLetter",$ray);
+	return array_map("getTypeLetter",$ray);
 }
 
 function prepareMYSQL($db, $query){

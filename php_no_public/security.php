@@ -4,6 +4,9 @@ function checkAdminLevel($requiredAdminLevel){
 	if ((!isset($requiredAdminLevel))||$requiredAdminLevel==null||$requiredAdminLevel==0){
 		return true;
 	}
+	if ((!isset($credentialServerType)) ||(!isset($credentialServer)) ||(!isset($credentialUsername)) ||(!isset($credentialPassword)) ||(!isset($credentialDatabase))){
+		return false;
+	}
 	$db = openSQL($credentialServerType,$credentialServer,$credentialUsername,$credentialPassword,$credentialDatabase);
 	$username = '';
 	$password = '';

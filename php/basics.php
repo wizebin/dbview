@@ -423,6 +423,48 @@ function describeTableMSSQL($db, $table){
 
 }
 
+function listTablesSQL($SQLType, $dbHandle, $database){
+	switch($SQLType){
+		case 'mysql':
+			return listTablesMYSQL($dbHandle, $database);
+		break;
+		case 'mssql':
+			return listTablesMSSQL($dbHandle, $database);
+		break;
+		case 'pgsql':
+		case 'postgres':
+			return listTablesPGSQL($dbHandle, $database);
+		break;
+		default:
+			return -1;
+	}
+}
+function describeTableSQL($SQLType, $dbHandle, $table){
+	switch($SQLType){
+		case 'mysql':
+			return describeTableMYSQL($dbHandle, $table);
+		break;
+		case 'mssql':
+			return describeTableMSSQL($dbHandle, $table);
+		break;
+		case 'pgsql':
+		case 'postgres':
+			return describeTablePGSQL($dbHandle, $table);
+		break;
+		default:
+			return -1;
+	}
+}
+
+function listTablesConf($db, $database){
+	global $dbtype;
+	return listTablesSQL($dbtype, $db, $database);
+}
+function describeTableConf($db, $table){
+	global $dbtype;
+	return describeTableSQL($dbtype, $db, $table);
+}
+
 function safeFilename($pageName){
 	$ret = preg_replace('/[^a-zA-Z_\- \.]/',"",$pageName);
 	if ($ret=='.' || $ret == '..') return '';

@@ -1,13 +1,23 @@
 <?php 
 	$home = $_SERVER['DOCUMENT_ROOT'];
 	$securityRequired=1;
-	$required=array();
+	$required=array('page');
 	include "secbase.php";
 ?><?php
 global $ret;
 if ($success){
 	$page = safeFilename($page);
-	$page = 'pages/'.$page.'.php';
+	$root = 'pages/';
+	if ($params['root']=='home'){
+		$root = $home;
+	}
+	else if ($params['root']=='here'){
+		$root = '';
+	}
+	else if ($params['root']=='settings'){
+		$root = 'settings/';
+	}
+	$page = $root.$page.'.php';
 			
 	if (file_exists($page)){
 		ob_start();

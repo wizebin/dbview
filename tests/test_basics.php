@@ -1,5 +1,5 @@
 <?php
-	include("../php_no_public/basics.php");
+	include("../php/basics.php");
 	
 	function getNS(){
 		return round(microtime(true) * 100000);
@@ -62,7 +62,7 @@
 	
 	simpleTest("makeTypeArray(array('hello',1,null));",array('s','i','s'));
 	
-	include('../php_no_public/security.php');
+	include('../php/security.php');
 	
 	simpleTest("checkAdminLevel(0);",true);
 	simpleTest("checkAdminLevel(1);",false);
@@ -78,7 +78,7 @@
 	$username = 'stephen';
 	$password = 'jackofhearts';
 	
-	include('../php_no_public/conf.php');
+	include('../php/conf.php');
 	
 	simpleTest("checkAdminLevel(1);",true);
 	

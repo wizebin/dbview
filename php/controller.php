@@ -161,6 +161,12 @@
 				//}
 				
 				break;
+			case 'describe':
+				$table = escapeIdentifierConf($db, $params['table']);
+				$results = describeTableConf($db, $table);
+				$ret['RESULTS']=$results;
+				$ret['AFFECTED']=$lastaffected;
+				break;
 			case 'arbitrary':
 				//query
 				if ($username=='admin'){

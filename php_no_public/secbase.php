@@ -36,6 +36,7 @@ if($success){
 		else{
 			$success=false;
 			$ret['SECURED']=false;
+			$ret['ERROR']='UNAUTHENTICATED';
 		}
 		
 	}

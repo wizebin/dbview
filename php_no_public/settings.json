@@ -1,0 +1,19 @@
+{
+    "dbtype": "pgsql",
+    "server": "127.0.0.1",
+    "database": "warehouse",
+    "user": "warehouse",
+    "pass": "dispatch",
+    "apiroot": "127.0.0.1/dbview/",
+    "credentialServerType": "pgsql",
+    "credentialServer": "127.0.0.1",
+    "credentialDatabase": "warehouse",
+    "credentialUsername": "warehouse",
+    "credentialPassword": "dispatch",
+    "credentialTable": "credentials",
+    "credentialUserColumn": "username",
+    "credentialPassColumn": "password",
+    "credentialAdminColumn": "securityLevel",
+    "userRO": "warehouse",
+    "passRO": "dispatch"
+}

@@ -1,7 +1,7 @@
 <?php include ("conf.php");
 $dberrors = array();$lasterror="";$lastid=null;$lastaffected=null;
 function noteError($errString){
-	global $dberrors;global $lasterror;
+	global $dberrors,$lasterror;
 	$lasterror=$errString;
 	array_push($dberrors, $lasterror);
 }
@@ -83,9 +83,13 @@ function executePGSQL($db, $query){
 		$lastres = pg_fetch_array($result, null, PGSQL_ASSOC);
 	}
 	$lastaffected = pg_affected_rows($result);
-	$lastid = pg_last_oid($result);
+	//$lastid = pg_last_oid($result);
+	//if (pg_num_rows($result)==null && count($ret)==0){
+		//not a select, return a bool
+		//$ret=($result!=null);
+	//}
 	pg_free_result($result);
-    return $ret; 
+	return $ret;
 }
 function executeMSSQL($db, $query){
 	$result = sqlsrv_query($db,$query);
@@ -313,6 +317,68 @@ function executePreparedSQL($SQLType, $dbHandle, $prepared, $params){
 	}
 }
 
+function escapeMYSQL($dbHandle, $data){
+	if ($data==null) return null;
+	return "'" . mysqli_real_escape_string($dbHandle, $data) . "'";
+}
+function escapePGSQL($dbHandle, $data){
+	if ($data==null) return null;
+	return "'" . pg_escape_string($dbHandle, $data) . "'";
+}
+function escapeMSSQL($dbHandle, $data){
+	if ($data==null) return null;
+	if(is_numeric($data))
+        return $data;
+    $unpacked = unpack('H*hex', $data);
+    return '0x' . $unpacked['hex'];
+}
+
+function escapeIdentifierMYSQL($dbHandle, $data){
+	if ($data==null) return null;
+	return mysqli_real_escape_string($dbHandle, $data);
+}
+function escapeIdentifierPGSQL($dbHandle, $data){
+	if ($data==null) return null;
+	return pg_escape_string($dbHandle, $data);
+}
+function escapeIdentifierMSSQL($dbHandle, $data){
+	if ($data==null) return null;
+	return safeFilename($data);
+}
+
+function escapeSQL($SQLType, $dbHandle, $data){
+	switch($SQLType){
+		case 'mysql':
+			return escapeMYSQL($dbHandle, $data);
+		break;
+		case 'mssql':
+			return escapeMSSQL($dbHandle, $data);
+		break;
+		case 'pgsql':
+		case 'postgres':
+			return escapePGSQL($dbHandle, $data);
+		break;
+		default:
+			return -1;
+	}
+}
+function escapeIdentifierSQL($SQLType, $dbHandle, $data){
+	switch($SQLType){
+		case 'mysql':
+			return escapeIdentifierMYSQL($dbHandle, $data);
+		break;
+		case 'mssql':
+			return escapeIdentifierMSSQL($dbHandle, $data);
+		break;
+		case 'pgsql':
+		case 'postgres':
+			return escapeIdentifierPGSQL($dbHandle, $data);
+		break;
+		default:
+			return -1;
+	}
+}
+
 function openConf(){
 	global $dbtype,$server,$database,$user,$pass;
 	if (isset($dbtype)&&isset($server)&&isset($database)&&isset($user)&&isset($pass)){
@@ -328,22 +394,30 @@ function closeConf($db){
 	global $dbtype;
 	return closeSQL($dbtype,$db);
 }
+function escapeConf($db, $data){
+	global $dbtype;
+	return escapeSQL($dbtype, $db, $data);
+}
+function escapeIdentifierConf($db, $data){
+	global $dbtype;
+	return escapeIdentifierSQL($dbtype, $db, $data);
+}
 
 function listTablesMYSQL($db, $database){
 	return executeMYSQL($db, "SHOW TABLES IN " . $database);
 }
 function listTablesPGSQL($db, $database){
-
+	return executePGSQL($db, "select * from information_schema.tables where table_schema = 'public' AND table_catalog = '$database';");
 }
 function listTablesMSSQL($db ,$database){
-
+	
 }
 
 function describeTableMYSQL($db, $table){
 	return executeMYSQL($db, "DESCRIBE " . $table);
 }
 function describeTablePGSQL($db, $table){
-	
+	return executePGSQL($db, "select column_name, data_type, character_maximum_length from INFORMATION_SCHEMA.COLUMNS where table_name = '$table';");
 }
 function describeTableMSSQL($db, $table){
 

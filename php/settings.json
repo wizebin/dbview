@@ -13,7 +13,7 @@
     "credentialTable": "credentials",
     "credentialUserColumn": "username",
     "credentialPassColumn": "password",
-    "credentialAdminColumn": "securityLevel",
+    "credentialAdminColumn": "securitylevel",
     "userRO": "warehouse",
     "passRO": "dispatch"
 }

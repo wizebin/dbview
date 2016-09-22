@@ -16,6 +16,14 @@ function prependElement(parent,child){
 	}
 }
 
+function removeAllChildren(element){
+	if (element!=null){
+		while (element.lastChild) {
+			element.removeChild(element.lastChild);
+		}
+	}
+}
+
 function getObjectKeys(obj){
 	var ret = [];
 	for (var key in obj) {
@@ -25,18 +33,18 @@ function getObjectKeys(obj){
 	return ret;
 }
 
-var changeload;//structure holding a function that takes a single parameter, is called when an http request begins
+var changeload;//structure holding function(loadingCount,url,verb,starting)
 var loadcount = 0;
 function setLoadingFunction(func){
 	changeload = func;
 }
-function startLoading(){
+function startLoading(url, verb){
 	loadcount++;
-	changeload && changeload(loadcount);
+	changeload && changeload(loadcount, url, verb, true);
 }
-function stopLoading(){
+function stopLoading(url, verb){
 	loadcount--;
-	changeload && changeload(loadcount);
+	changeload && changeload(loadcount, url, verb, false);
 }
 
 //NOT CROSS ORIGIN, set changeload to receive callbacks on quantity of current requests
@@ -51,13 +59,13 @@ var httpVERB = function(url, verb, params, username, password, successHandler, e
 	xhr.setRequestHeader("Authorization", "Basic " + btoa(username + ":" + password));
   }
   
-  startloading();
+  startLoading(url, verb);
   xhr.onreadystatechange = function() {
 	var status;
 	var data;
 	if (xhr.readyState == 4) {
 	  status = xhr.status;
-	  stoploading();
+	  stopLoading(url, verb);
 	  if (status == 200) {
 		try{
 			//data = JSON.parse(xhr.responseText);
@@ -86,11 +94,11 @@ var jsonVERB = function(url, verb, params, username, password, successHandler, e
 		successHandler&&successHandler(JSON.parse(data));
 	}
 	catch(err){
-		errorHandler && errorHandler("Error In jsonVERB (PROBABLY A SERVER JSON MISCONFIGURATION) "+err.message+" DATA: "+xhr.responseText);
+		errorHandler && errorHandler("Error In jsonVERB (PROBABLY A SERVER JSON MISCONFIGURATION) Message("+err.message+") Data("+data+")");
 	}
   }, 
   function(data){
-	errorHandler && errorHandler("jsonVERB ERR: "+status);
+	errorHandler && errorHandler("jsonVERB ERR: "+data);
   });
 }
 
@@ -130,6 +138,7 @@ var deleteHTTP = function(url, username, password, successHandler, errorHandler)
 
 function setCookie(cname, cvalue, exdays) {
 	var d = new Date();
+	if (exdays==undefined)exdays=15;
 	d.setTime(d.getTime() + (exdays*24*60*60*1000));
 	var expires = "expires="+d.toUTCString();
 	document.cookie = cname + "=" + cvalue + "; " + expires;
@@ -143,7 +152,7 @@ function getCookie(cname) {
 		while (c.charAt(0)==' ') c = c.substring(1);
 		if (c.indexOf(name) == 0) return c.substring(name.length, c.length);
 	}
-	return "";
+	return null;
 }
 
 //http://stackoverflow.com/a/20584396
@@ -173,6 +182,16 @@ function nodeScriptClone(node){
 }
 function fixElementScripts(elid){
 	nodeScriptReplace(document.getElementById(elid));
+}
+function setElementContentWithScripts(element, content){
+	if (element==null)
+		return false;
+	if (typeof element === 'string'){
+		element = document.getElementById(element);
+	}
+	element.innerHTML = content;
+	nodeScriptReplace(element);
+	return true;
 }
 function showBlock(obj){
 	document.getElementById(obj).style.display="block";

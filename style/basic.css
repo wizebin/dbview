@@ -1,0 +1,12 @@
+html,body{padding:0px;margin:0px;font-family:arial;height:100%;}
+html,body,div{position:relative;}
+div#content{position:absolute;top:74px;right:0px;left:0px;bottom:0px;overflow-y:auto;}
+div#wrapper{background-color:#333;color:#fff;height:74px;}
+div#loginbox{width:300px;background-color:#aaa;padding:30px;text-align:right;margin:50px auto;}
+div#loginbox input{width:100%;box-sizing:border-box;padding:5px;}
+div#loginbox button{margin-top:20px;}
+button{border:none;padding: 5px 15px;background-color: #ddd;color: #333;}
+button:hover{cursor:pointer;background-color: #ccc;color: #333;}
+div.controls{padding:5px;border-bottom:1px solid #aaa;}
+div.tableView{padding:5px;}
+input.regInput{box-sizing:border-box;width:200px;padding:5px;}

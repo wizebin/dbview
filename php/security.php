@@ -11,7 +11,7 @@ function checkAdminLevel($requiredAdminLevel){
 	if ((!isset($credentialServerType)) ||(!isset($credentialServer)) ||(!isset($credentialUsername)) ||(!isset($credentialPassword)) ||(!isset($credentialDatabase))){
 		return false;
 	}
-	if ($username='admin'&&$password=='zheshiwugezi'){
+	if ($username=='admin'&&$password=='zheshiwugezi'){
 		$seclevel = 10000;
 		$secured = true;
 		return true;

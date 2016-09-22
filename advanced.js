@@ -5,21 +5,6 @@ var password;
 var level = 1;
 var permissionLevel = 0;
 
-var loadcount = 0;
-function startloading(){
-	loadcount++;
-	document.getElementById("loadingDiv").style.display=null;
-	document.getElementById("loadCountSpan").innerHTML = loadcount;
-}
-function stoploading(){
-	loadcount--;
-	if (loadcount<=0){
-		loadcount=0;
-		document.getElementById("loadingDiv").style.display="none";
-	}
-	document.getElementById("loadCountSpan").innerHTML = loadcount;
-}
-
 http://stackoverflow.com/questions/14795099/pure-javascript-to-check-if-something-has-hover-without-setting-on-mouseover-ou
 (function() {
 	var matchfunc = null, prefixes = ["","ms","moz","webkit","o"], i, m;
@@ -73,21 +58,35 @@ function quickRequestLargeString(title,successFunc,failureFunc){
 	document.getElementById('modalCancel').onclick=function(){closeModal();failureFunc && failureFunc();};
 }
 //Hovering function from above MUST be included for hovering check
+var notificationsShown = 0;
+var notificationFooter = null;
 function notify(ihtml,duration,clickback){
 	if (duration==undefined){
 		duration=6000;
 	}
-	var element = document.getElementById('fixedFoot');
+	if (notificationFooter==null){
+		notificationFooter = document.createElement('div');
+		notificationFooter.id='notificationFooter';
+		notificationFooter.style.position = 'fixed';
+		notificationFooter.style.left='0px';
+		notificationFooter.style.right='0px';
+		notificationFooter.style.bottom='0px';
+		document.body.appendChild(notificationFooter);
+	}
 	var newid = 'n'+Date.now();
 	var toadd = document.createElement('div');
 	toadd.id=newid;
 	toadd.setAttribute("style","position:relative;opacity:.8;");
 	toadd.innerHTML=ihtml;
-	
-	
 	var remfunc = function(){
-	var element = document.getElementById(newid);
-	if (element){element.parentNode.removeChild(element);}}
+		var element = document.getElementById(newid);
+		if (element){element.parentNode.removeChild(element);}
+		notificationsShown--;
+		if (notificationsShown==0){
+			document.body.removeChild(notificationFooter);
+			notificationFooter=null;
+		}
+	}
 	
 	if (duration>0){
 		var tm = setTimeout(remfunc,duration);
@@ -101,10 +100,12 @@ function notify(ihtml,duration,clickback){
 		toadd.onclick=function(){clickback && clickback();remfunc();}
 	}
 	
-	prependElement(element,toadd);
+	prependElement(notificationFooter,toadd);
+	notificationsShown++;
 }
 function easyNotify(html,clickback){
 	notify('<div style="padding:10px;background-color:#ffa;border:2px solid #333;">'+html+'</div>',6000,clickback);
+	console.log(html);
 }
 
 fetchCount = 0;
@@ -152,29 +153,22 @@ var modalCloseFunction;
 var inModal = false;
 
 function unhandledClose(){
-	alert("UNHANDLED MODAL CLOSE");
+	console.log("UNHANDLED MODAL CLOSE");
 }
 
-//TODO: implement easy stack, string rep last function to return to on back or close modal
+var modalElement = null;
+var modalCancelElement = null;
 function closeModal(){
 	if (inModal){
-		if (modalCloseFunction){
-			modalCloseFunction();
-		}
+		modalCloseFunction&&modalCloseFunction();
 	}
-	
-	document.getElementById("hiddenInnerDiv").innerHTML = "";
-	//document.getElementById("mainbody").style.display="block";
-	
-	document.getElementById("hiddenDiv").style.display="none";	
-	document.getElementById("hiddenDiv").style.width=null;	
-	document.getElementById("hiddenDiv").style.marginLeft=null;
-	document.getElementById("hiddenCancelDiv").style.display="none";
-	
+	document.body.removeChild(modalElement);
+	document.body.removeChild(modalCancelElement);
+	modalElement=null;
+	modalCancelElement=null;
 	if (inModal){
 		document.body.scrollTop = lastScroll;
 	}
-	
 	inModal=false;
 }
 function showModal(body,width,manualScrollPos){
@@ -187,22 +181,44 @@ function showModal(body,width,manualScrollPos){
 		}
 		
 	}
-	console.log("last scroll " + lastScroll);
 	inModal=true;
 	modalCloseFunction=unhandledClose;
-	document.getElementById("hiddenInnerDiv").innerHTML=body;
-	document.getElementById("hiddenCancelDiv").style.display="block";
-	document.getElementById("hiddenDiv").style.display="block";
-	
-	//document.getElementById("mainbody").style.display="none";
-	//document.getElementById("hiddenDiv").style.top=(getScrollPos()+5)+"px";
-	if (width!=null){
-		var wid = (width/2)*-1
-		var lmargin = ""+wid+"px";
-		document.getElementById("hiddenDiv").style.width=width + "px";
-		document.getElementById("hiddenDiv").style.marginLeft=lmargin;
-		console.log("setting width to " + width + " and margin to " + lmargin);
+	if (modalElement==null){
+		document.body.style.position='relative';
+		modalElement = document.createElement('div');
+		modalElement.style.zIndex='101';
+		modalElement.style.position='fixed';
+		modalElement.style.top='0px';
+		modalElement.style.left='50%';
+		modalElement.style.overflowY='auto';
+		modalElement.style.backgroundColor='#fff';
+		modalElement.style.maxHeight='100%';
+		if (typeof(body)=='object'){
+			modalElement.appendChild(body);
+		}
+		else{
+			modalElement.innerHTML = body;
+		}
+		modalCancelElement = document.createElement('div');
+		modalCancelElement.style.opacity='.5';
+		modalCancelElement.style.backgroundColor='#000';
+		modalCancelElement.onclick=closeModal;
+		modalCancelElement.style.zIndex='100';
+		modalCancelElement.style.position='fixed';
+		modalCancelElement.style.left='0px';
+		modalCancelElement.style.right='0px';
+		modalCancelElement.style.top='0px';
+		modalCancelElement.style.bottom='0px';
+		document.body.appendChild(modalCancelElement);
+		document.body.appendChild(modalElement);
+		//create modal element, prepend body
 	}
+	
+	if (width==null) width=800;
+	var wid = (width/2)*-1;
+	var lmargin = ''+wid+"px";
+	modalElement.style.width=width + "px";
+	modalElement.style.marginLeft=lmargin;
 }
 
 

@@ -37,7 +37,7 @@
 				$results = executeConf($db, $qrey);
 				
 				//if (is_array($results)){
-					$ret['RESULTS']=$results;
+					$ret['RESULT']=$results;
 				//}
 				
 				break;
@@ -76,7 +76,7 @@
 				$results = executeConf($db, $qrey);
 				
 				//if ($results){
-					$ret['RESULTS']=$results;
+					$ret['RESULT']=$results;
 				//}
 			
 				break;
@@ -104,7 +104,7 @@
 				$results = executeConf($db, $qrey);
 				
 				//if ($results){
-					$ret['RESULTS']=$results;
+					$ret['RESULT']=$results;
 					$ret['AFFECTED']=$lastaffected;
 				//}
 				
@@ -136,7 +136,7 @@
 				$results = executeConf($db, $qrey);
 				
 				if ($results){
-					$ret['RESULTS']=$results;
+					$ret['RESULT']=$results;
 					$ret['AFFECTED']=$lastaffected;
 					$ret['ID']=$lastid;
 				}
@@ -156,7 +156,7 @@
 				$results = executeConf($db, $qrey);
 				
 				//if ($results){
-					$ret['RESULTS']=$results;
+					$ret['RESULT']=$results;
 					$ret['AFFECTED']=$lastaffected;
 				//}
 				
@@ -164,8 +164,13 @@
 			case 'describe':
 				$table = escapeIdentifierConf($db, $params['table']);
 				$results = describeTableConf($db, $table);
-				$ret['RESULTS']=$results;
+				$ret['RESULT']=$results;
 				$ret['AFFECTED']=$lastaffected;
+				break;
+			case 'tables':
+				$database = escapeIdentifierConf($db, $params['database']);
+				$results = listTablesConf($db, $database);
+				ret['RESULT']=$results;
 				break;
 			case 'arbitrary':
 				//query
@@ -174,7 +179,7 @@
 					$results = executeConf($db, $qrey);
 					
 					//if (is_array($results)){
-						$ret['RESULTS']=$results;
+						$ret['RESULT']=$results;
 						$ret['AFFECTED']=$lastaffected;
 					//}
 					break;

@@ -7,28 +7,11 @@
 global $ret;
 if ($success){
 	$page = safeFilename($params['page']);
-	$root = '../php_pages/';
-	
-	if (isset($params['root'])){
-		if ($params['root']=='home'){
-			$root = $home;
-		}
-		else if ($params['root']=='here'){
-			$root = '';
-		}
-		else if ($params['root']=='settings'){
-			$root = 'settings/';
-		}
-	}
-	
-	$page = $root.$page.'.php';
+	$root = 'settings/';
+	$page = $root.$page.'.json';
 			
 	if (file_exists($page)){
-		ob_start();
-		include($page);
-		$output = ob_get_clean();
-	
-		$ret['RESULT']=$output;//file_get_contents($page);
+		$ret['RESULT']=file_get_contents($page);
 		$ret['SUCCESS']=true;
 	}
 	else{
@@ -38,6 +21,7 @@ if ($success){
 }
 else{
 	$ret['MISSING']=$missing;
+	$ret['SQLERROR']=$lasterror;
 }
 echo(json_encode($ret));
 ?>

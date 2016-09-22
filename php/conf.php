@@ -41,23 +41,4 @@ function saveSettings($settingsFilename){
 
 loadSettings($SETTINGS_FILE);
 saveSettings($SETTINGS_FILE);
-
-/*
-$dbtype=$settings['dbtype'];//'pgsql';//mysql,mssql,pgsql
-$server=$settings['server'];//'127.0.0.1';
-$database=$settings['database'];//'warehouse';
-$user=$settings['user'];//'warehouse';
-$pass=$settings['pass'];//'dispatch';
-$apiroot=$settings['apiroot'];//'http://127.0.0.1/dbview/api/';
-$credentialServerType=$settings['credentialServerType'];//'pgsql';
-$credentialServer=$settings['credentialServer'];//'127.0.0.1';
-$credentialDatabase=$settings['credentialDatabase'];//'warehouse';
-$credentialUsername=$settings['credentialUsername'];//'warehouse';
-$credentialPassword=$settings['credentialPasswoerd'];//'dispatch';
-$credentialTable=$settings['credentialTable'];//'credentials';
-$credentialUserColumn=$settings['credentialUserColumn'];//'username';
-$credentialPassColumn=$settings['credentialPassColumn'];//'password';
-$credentialAdminColumn=$settings['credentialAdminColumn'];//'securitylevel';
-$userRO=$user;
-$passRO=$pass;*/
 ?>

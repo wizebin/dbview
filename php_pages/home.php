@@ -164,8 +164,10 @@
 			hh.innerHTML=key;
 			var el = document.createElement('div');
 			el.innerHTML=obj[key];
+			var hr = document.createElement('hr');
 			displayAble.appendChild(hh);
 			displayAble.appendChild(el);
+			displayAble.appendChild(hr);
 		},this);
 		showModal(displayAble);
 	}

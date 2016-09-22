@@ -170,7 +170,7 @@
 			case 'tables':
 				$database = escapeIdentifierConf($db, $params['database']);
 				$results = listTablesConf($db, $database);
-				ret['RESULT']=$results;
+				$ret['RESULT']=$results;
 				break;
 			case 'arbitrary':
 				//query

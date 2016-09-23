@@ -378,7 +378,7 @@ function listWithParamsPGSQL($db, $table, $page = 0, $pagesize = 100, $filterlis
 			$col = escapeIdentifierPGSQL($db,$sort['col']);
 			if (isset($sort['direction'])){
 				$dir = $sort['direction'];
-				if (strtolower($dir)=='DESC'){
+				if (strtolower($dir)=='desc'){
 					array_push($sortFinalList,$col . ' DESC');
 				}
 				else{

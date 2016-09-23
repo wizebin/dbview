@@ -1,8 +1,12 @@
 <style>
 	td,th{padding:20px; background-color:#f4f4f4;}
 	th{background-color:#eee;font-weight:normal;color:#888;}
+	div.selectableDiv{padding:10px;border-bottom:1px solid #000;}
 	div.selectableDiv:hover{background-color:#aaa;}
 	table.fullWidthTable,button.fullWidthButton{width:100%;}
+	th.sortingASC{border-top:1px solid #000;}
+	th.sortingDESC{border-bottom:1px solid #000;}
+	
 </style>
 
 <div id="tableView"></div>
@@ -30,6 +34,9 @@
 	function getSelectedText(element){
 		return element.options[element.selectedIndex].text
 	}
+	function getSelectedIndex(element){
+		return element.selectedIndex;
+	}
 	function makeOrClear(current, elementType){
 		if (current==undefined){
 			return document.createElement(elementType);
@@ -44,18 +51,6 @@
 		splitter.style.display='inline-block';
 		splitter.style.width=width+'px';
 		parent.appendChild(splitter);
-	}
-	function addQuickElement(parent, element, content, props){
-		var el = document.createElement(element);
-		if (content!=undefined)
-			el.innerHTML=content;
-		if (props!=undefined){
-			var keys = getObjectKeys(props);
-			keys.forEach(function(key){
-				el.setAttribute(key,props[key]);
-			},this);
-		}
-		parent.appendChild(el);
 	}
 	
 	var acceptableVerbList=[{'name':'eq','alias':'is'},{'name':'not_eq','alias':'is not'},{'name':'lt','alias':'is less than'},{'name':'gt','alias':'is greater than'},{'name':'gteq','alias':'is greater than or equal to'},{'name':'lteq','alias':'is less than or equal to'},{'name':'cont','alias':'contains'},{'name':'start','alias':'starts with'},{'name':'end','alias':'ends with'},{'name':'i_cont','alias':'case insensitive contains'},{'name':'present','alias':'is present'},{'name':'blank','alias':'is blank'},{'name':'null','alias':'is null'},{'name':'not_null','alias':'is not null'}];
@@ -145,7 +140,7 @@
 		this.objectInput.onkeydown = function(e) {
 			e = e || window.event;
 			if (e.keyCode == 13) {
-				tthis.addFilter(getSelectedText(tthis.subjectSelect),getSelectedText(tthis.verbSelect),tthis.objectInput.value);
+				tthis.addFilter(getSelectedText(tthis.subjectSelect),acceptableVerbList[getSelectedIndex(tthis.verbSelect)]['name'],tthis.objectInput.value);
 				this.shouldReturnToFirstPage=true;
 				tthis.initiateLoadAndDisplay();
 				tthis.objectInput.value='';
@@ -238,7 +233,17 @@
 		shown.forEach(function(el){			
 			var th = document.createElement('th');
 			th.innerHTML = el;
+			var cursort = this.getSortDirectionForColumn(el);
+			if (cursort!=null){
+				if (cursort=='DESC'){
+					th.className='sortingDESC';
+				}
+				else{
+					th.className='sortingASC'
+				}
+			}
 			this.headRow.appendChild(th);
+			
 		},this);
 		
 		this.tableView.appendChild(this.headRow);
@@ -255,6 +260,14 @@
 		
 		this.tableDiv.appendChild(this.tableView);
 		parent.appendChild(this.tableDiv);
+	}
+	TableView.prototype.getSortDirectionForColumn = function(column){
+		var ret = null;
+		this.sorts.forEach(function(el){
+			if (el['col']==column)
+				ret=el['direction'];
+		},this);
+		return ret;
 	}
 	TableView.prototype.loadDataFromServer = function(successCallback, failureCallback){
 		if (this.shouldReturnToFirstPage){
@@ -281,13 +294,25 @@
 		var tthis = this;
 		displayForDeletion(this.filters, function(newfilters){
 			tthis.filters=newfilters;
+			this.shouldReturnToFirstPage=true;
 			tthis.initiateLoadAndDisplay();
 		});
 	}
 	TableView.prototype.editSorts = function(){
 		var tthis = this;
 		chooseFromList(this.getIndexedCols(),function(choice){
-			tthis.sorts = [{'col':choice}];
+			var sorty = 'ASC';
+			var cursort = tthis.sorts;
+			if (cursort.length>0){
+				if (cursort.length==1){
+					if (cursort[0]['col']==choice){
+						if (cursort[0]['direction']==sorty)
+							sorty = 'DESC';
+					}
+				}
+			}
+			tthis.sorts = [{'col':choice,'direction':sorty}];
+			this.shouldReturnToFirstPage=true;
 			tthis.initiateLoadAndDisplay();
 		});
 	}
@@ -391,8 +416,6 @@
 			var name = document.createElement('span');
 			name.innerHTML=key;
 			var div = document.createElement('div');
-			div.style.padding='10px';
-			div.style.borderBottom='1px solid #000';
 			div.className='selectableDiv';
 			div.onclick=function(){el.checked=!el.checked;}
 			
@@ -543,16 +566,14 @@
 	function chooseFromList(list, chooseCallback){
 		var objectList = document.createElement('div');
 		list.forEach(function(data){
-			var choose = document.createElement('button');
+			var choose = document.createElement('div');
 			choose.onclick=function(){
 				chooseCallback&&chooseCallback(data);
 				closeModal();
 			};
 			choose.innerHTML=data;
-			choose.className='fullWidthButton';
-			var hr = document.createElement('hr');
+			choose.className='selectableDiv';
 			objectList.appendChild(choose);
-			objectList.appendChild(hr);
 		},this);
 		showModal(objectList);
 	}

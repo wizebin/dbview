@@ -104,6 +104,7 @@
 				});
 			}
 			
+			var loadingAnimation = null;
 			function loadChange(loadCount, resource, verb, starting){				
 				var word = 'Loaded';
 				if (starting)
@@ -113,8 +114,25 @@
 				
 				if (loadCount>0){
 					//show loading animation
+					if (loadingAnimation==null){
+						loadingAnimation = document.createElement('div');
+						loadingAnimation.style.left='50%';
+						loadingAnimation.style.marginLeft='-300px';
+						loadingAnimation.style.width='600px';
+						loadingAnimation.style.backgroundColor='#fff';
+						//loadingAnimation.style.opacity='.7';
+						loadingAnimation.style.top='10%';
+						loadingAnimation.style.padding='40px';
+						loadingAnimation.style.position='fixed';
+						loadingAnimation.style.boxShadow='0px 0px 5px #000';
+						loadingAnimation.style.zIndex='200';
+						document.body.appendChild(loadingAnimation);
+					}
+					loadingAnimation.innerHTML += '<div>'+verb+' '+resource+' '+(starting?'beginning':'finished')+'</div>';
 				}
 				else{
+					loadingAnimation.parentNode.removeChild(loadingAnimation);
+					loadingAnimation=null;
 					//hide loading animation
 				}
 			}
@@ -133,6 +151,12 @@
 			}
 			function displayLogin(){
 				displayPage('<div id="loginbox"><div><input type="username" id="username" placeholder="username"></input><br /><input type="password" id="password" placeholder="password"></input></div><button onclick="executeLogin()">Login</button></div>');
+				document.getElementById('password').onkeydown = function(e) {
+					e = e || window.event;
+					if (e.keyCode == 13) {
+						executeLogin();
+					}
+				};
 			}
 			
 			function smartLogin(automated){

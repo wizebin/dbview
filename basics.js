@@ -7,6 +7,19 @@ function showInID(obID,content){
 	return false;
 }
 
+function addQuickElement(parent, element, content, props){
+	var el = document.createElement(element);
+	if (content!=undefined)
+		el.innerHTML=content;
+	if (props!=undefined){
+		var keys = getObjectKeys(props);
+		keys.forEach(function(key){
+			el.setAttribute(key,props[key]);
+		},this);
+	}
+	parent.appendChild(el);
+}
+
 function prependElement(parent,child){
 	if (parent.firstChild!=null){
 		parent.insertBefore(child, parent.firstChild);

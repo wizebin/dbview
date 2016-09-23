@@ -1,5 +1,6 @@
 <style>
-	td,th{padding:3px; background-color:#aaa;}
+	td,th{padding:20px; background-color:#f4f4f4;}
+	th{background-color:#eee;font-weight:normal;color:#888;}
 	div.selectableDiv:hover{background-color:#aaa;}
 	table.fullWidthTable,button.fullWidthButton{width:100%;}
 </style>
@@ -44,13 +45,20 @@
 		splitter.style.width=width+'px';
 		parent.appendChild(splitter);
 	}
-	function addQuickElement(parent, element, content){
+	function addQuickElement(parent, element, content, props){
 		var el = document.createElement(element);
 		if (content!=undefined)
 			el.innerHTML=content;
+		if (props!=undefined){
+			var keys = getObjectKeys(props);
+			keys.forEach(function(key){
+				el.setAttribute(key,props[key]);
+			},this);
+		}
 		parent.appendChild(el);
 	}
 	
+	var acceptableVerbList=[{'name':'eq','alias':'is'},{'name':'not_eq','alias':'is not'},{'name':'lt','alias':'is less than'},{'name':'gt','alias':'is greater than'},{'name':'gteq','alias':'is greater than or equal to'},{'name':'lteq','alias':'is less than or equal to'},{'name':'cont','alias':'contains'},{'name':'start','alias':'starts with'},{'name':'end','alias':'ends with'},{'name':'i_cont','alias':'case insensitive contains'},{'name':'present','alias':'is present'},{'name':'blank','alias':'is blank'},{'name':'null','alias':'is null'},{'name':'not_null','alias':'is not null'}];
 	var acceptableVerbs = ['eq','not_eq','lt','gt','gteq','lteq','cont','start','end','i_cont','present','blank','null','not_null'];
 
 	var TableView = function(){
@@ -122,10 +130,10 @@
 		
 		this.verbSelect = makeOrClear(this.verbSelect,'select');
 		
-		acceptableVerbs.forEach(function(el){
+		acceptableVerbList.forEach(function(el){
 		
 			var colbuf = document.createElement('option');
-			colbuf.text = el;//only valid for pgsql
+			colbuf.text = el['alias'];//only valid for pgsql
 			this.verbSelect.appendChild(colbuf);
 			
 		},this);
@@ -184,21 +192,21 @@
 		this.controlDiv.appendChild(this.objectInput);
 		addQuickSpacer(this.controlDiv,10);
 		this.controlDiv.appendChild(this.submitButton);
-		addQuickSpacer(this.controlDiv,10);
+		addQuickElement(this.controlDiv,'span','|',{'style':'display:inline-block;padding:5px 10px;'});
 		this.controlDiv.appendChild(this.filtersButton);
 		addQuickSpacer(this.controlDiv,10);
 		this.controlDiv.appendChild(this.sortsButton);
 		addQuickSpacer(this.controlDiv,10);
 		this.controlDiv.appendChild(this.fieldsButton);
 		
-		addQuickSpacer(this.controlDiv,20);
+		addQuickElement(this.controlDiv,'span','|',{'style':'display:inline-block;padding:5px 20px;'});
 		this.controlDiv.appendChild(this.prevPageButton);
 		addQuickSpacer(this.controlDiv,10);
 		this.controlDiv.appendChild(this.nextPageButton);
 		addQuickSpacer(this.controlDiv,10);
 		
 		var quantity = this.data.length;
-		addQuickElement(this.controlDiv,'span',''+(this.pageSize*this.page) +'-'+ (this.pageSize*(this.page)+quantity) + ' (page ' + (this.page+1) + ')');
+		addQuickElement(this.controlDiv,'span',''+(this.pageSize*this.page) +'-'+ (this.pageSize*(this.page)+quantity) + ' (page ' + (this.page+1) + ')',{'class':'infoLabel'});
 		
 		
 		parent.appendChild(this.controlDiv);

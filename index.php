@@ -11,7 +11,7 @@
 	</head>
 
 	<body>
-		<div id="wrapper"><div style="float:right;"><button onclick="logout()">logout</button></div><a href="/" style=""><img src='resources/logo64.png' style="padding:5px;background-color:#544;"></img></a></div><div style="overflow:hidden;"></div>
+		<div id="wrapper"><div style="float:right;padding:10px;"><button onclick="logout()">logout</button></div><a href="/" style=""><img src='resources/logo64.png' style="padding:5px;"></img></a></div><div style="overflow:hidden;"></div>
 		<div id="content"></div>
 	
 		<script>

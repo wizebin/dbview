@@ -1,6 +1,6 @@
 <?php 
 	$home = $_SERVER['DOCUMENT_ROOT'];
-	$securityRequired=1;
+	$securityRequired=100;
 	$required=array('page','data');
 	include "secbase.php";
 ?><?php

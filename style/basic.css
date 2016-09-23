@@ -9,4 +9,5 @@ button{border:none;padding: 5px 15px;background-color: #ddd;color: #333;}
 button:hover{cursor:pointer;background-color: #ccc;color: #333;}
 div.controls{padding:5px;border-bottom:1px solid #aaa;}
 div.tableView{padding:5px;}
+select{box-sizing:border-box;padding:5px;}
 input.regInput{box-sizing:border-box;width:200px;padding:5px;}

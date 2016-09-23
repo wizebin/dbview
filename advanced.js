@@ -159,6 +159,8 @@ function unhandledClose(){
 var modalElement = null;
 var modalCancelElement = null;
 function closeModal(){
+	if (modalElement==null)
+		return false;
 	if (inModal){
 		modalCloseFunction&&modalCloseFunction();
 	}
@@ -170,6 +172,7 @@ function closeModal(){
 		document.body.scrollTop = lastScroll;
 	}
 	inModal=false;
+	return true;
 }
 function showModal(body,width,manualScrollPos){
 	if (!inModal){

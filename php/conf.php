@@ -40,5 +40,5 @@ function saveSettings($settingsFilename){
 }
 
 loadSettings($SETTINGS_FILE);
-saveSettings($SETTINGS_FILE);
+//saveSettings($SETTINGS_FILE);
 ?>

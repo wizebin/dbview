@@ -229,6 +229,15 @@ function closeMSSQL($db){
 	sqlsrv_close($db);
 }
 
+function escapeNoQuoteMYSQL($dbHandle, $data){
+	if ($data==null) return null;
+	return mysqli_real_escape_string($dbHandle, $data);
+}
+function escapeNoQuotePGSQL($dbHandle, $data){
+	if ($data==null) return null;
+	return pg_escape_string($dbHandle, $data);
+}
+
 function escapeMYSQL($dbHandle, $data){
 	if ($data==null) return null;
 	return "'" . mysqli_real_escape_string($dbHandle, $data) . "'";
@@ -269,13 +278,133 @@ function listTablesMSSQL($db ,$database){
 }
 
 function describeTableMYSQL($db, $table){
-	return executeMYSQL($db, "DESCRIBE " . $table);
+	return executeMYSQL($db, "DESCRIBE $table");
 }
 function describeTablePGSQL($db, $table){
 	return executePGSQL($db, "select * from INFORMATION_SCHEMA.COLUMNS where table_name = '$table';");
 }
 function describeTableMSSQL($db, $table){
 
+}
+
+function listIndexedMYSQL($db, $table){
+	return executeMYSQL($db, "SHOW INDEXES FOR $table");
+}
+function listIndexedPGSQL($db, $table){
+	return executePGSQL($db, "select t.relname as table_name, i.relname as index_name, a.attname as column_name from pg_class t, pg_class i, pg_index ix, pg_attribute a where t.oid = ix.indrelid and i.oid = ix.indexrelid and a.attrelid = t.oid and a.attnum = ANY(ix.indkey) and t.relkind = 'r' and t.relname like '$table' order by t.relname, i.relname;");
+}
+function listIndexedMSSQL($db, $table){
+	
+}
+
+
+$verbMap = array('eq'=>'=','not_eq'=>'!=','lt'=>'<','gt'=>'>','gteq'=>'>=','lteq'=>'<=');
+$valModifyingVerbMap = array('cont'=>'LIKE','start'=>'LIKE','end'=>'LIKE','i_cont'=>'ILIKE');//ilike only works with postgresql
+$specialVerbMap = array('present','blank','null','not_null');
+function getFilterFromDataPGSQL($db, $unescapedcol, $word, $unescapedval){
+	global $verbMap,$valModifyingVerbMap,$specialVerbMap;
+	$col = escapeIdentifierPGSQL($db,$unescapedcol);
+	$verb = '';
+	if (array_key_exists($word,$verbMap)){
+		$verb = $verbMap[$word];
+		$val = escapePGSQL($db,$unescapedval);
+		return $col . ' ' . $verb . ' ' . $val;
+	}
+	else if (array_key_exists($word,$valModifyingVerbMap)){
+		$modifiedval = $unescapedval;
+		$verb = $valModifyingVerbMap[$word];
+		if ($word=='cont'||$word=='icont'){
+			$modifiedval = '%'.$unescapedval.'%';
+		}
+		else if ($word=='start'){
+			$modifiedval = $unescapedval.'%';
+		}
+		else if ($word=='end'){
+			$modifiedval = '%'.$unescapedval;
+		}
+		
+		$val = escapePGSQL($db,$modifiedval);
+		return $col . ' ' . $verb . ' ' . $val;
+	}
+	else if (in_array($word,$specialVerbMap)){
+		if ($word=='present'){
+			return "($col" . " IS NOT NULL)";
+		}
+		else if ($word=='blank'){
+			return "($col" . '==' . "'' OR $col IS NULL)";
+		}
+		else if ($word=='null'){
+			return $col . ' IS NULL';
+		}
+		else if ($word=='not_null'){
+			return $col . ' IS NOT NULL';
+		}
+	}
+	
+	return null;
+}
+
+function listWithParamsMYSQL($db, $table, $page = 0, $pagesize = 100, $filterlist = array(), $sortlist = array()){
+	
+}
+function listWithParamsPGSQL($db, $table, $page = 0, $pagesize = 100, $filterlist = array(), $sortlist = array()){
+	$filterStatement = "";
+	$sortStatement = "";
+	$limitStatement = "";
+	
+	$filterFinalList = array();
+	$sortFinalList = array();
+	
+	if (is_array($filterlist) && count($filterlist) > 0){
+		if (array_key_exists('sub',$filterlist)&&array_key_exists('verb',$filterlist)){
+			$filterlist = array($filterlist);
+		}
+		foreach($filterlist as $filter){
+			$addfilter = getFilterFromDataPGSQL($db, $filter['sub'], $filter['verb'], isset($filter['obj'])?$filter['obj']:'');
+			if ($addfilter != null){
+				array_push($filterFinalList,$addfilter);
+			}
+		}
+	}
+	if (count($filterFinalList)>0){
+		$filterStatement = 'WHERE ' . implode(' AND ',$filterFinalList);
+	}
+	
+	if (is_array($sortlist) && count($sortlist) > 0){
+		if (array_key_exists('col',$sortlist)){
+			$sortlist = array($sortlist);
+		}
+		foreach($sortlist as $sort){
+			$col = escapeIdentifierPGSQL($db,$sort['col']);
+			if (isset($sort['direction'])){
+				$dir = $sort['direction'];
+				if (strtolower($dir)=='DESC'){
+					array_push($sortFinalList,$col . ' DESC');
+				}
+				else{
+					array_push($sortFinalList,$col . ' ASC');
+				}
+			}
+			else{
+				array_push($sortFinalList,$col);
+			}
+		}
+	}
+	
+	if (count($sortFinalList)>0){//MAY NEED TO DO INNER QUERY IF LIMIT IS ALSO INCLUDED
+		$sortStatement = "ORDER BY " . implode(', ',$sortFinalList);
+	}
+	
+	if ($page!=null && $pagesize !=null && is_numeric($page) && is_numeric($pagesize)){ 
+		$limitStatement = "LIMIT ".round($pagesize)." OFFSET ". round($page*$pagesize);
+	}
+	
+	$qrey = "SELECT * FROM $table $filterStatement $sortStatement $limitStatement;";
+	$GLOBALS['LASTQREY']=$qrey;
+	return executePGSQL($db, $qrey);
+}
+function listWithParamsMSSQL($db, $table, $page = 0, $pagesize = 100, $filterlist = array(), $sortlist = array()){
+	
 }
 
 ///$SQLType can be ['mysql','pgsql','mssql'];
@@ -431,6 +560,38 @@ function describeTableSQL($SQLType, $dbHandle, $table){
 			return -1;
 	}
 }
+function listIndexedSQL($SQLType, $dbHandle, $table){
+	switch($SQLType){
+		case 'mysql':
+			return listIndexedMYSQL($dbHandle, $table);
+		break;
+		case 'mssql':
+			return listIndexedMSSQL($dbHandle, $table);
+		break;
+		case 'pgsql':
+		case 'postgres':
+			return listIndexedPGSQL($dbHandle, $table);
+		break;
+		default:
+			return -1;
+	}
+}
+function listWithParamsSQL($SQLType, $db, $table, $page = 0, $pagesize = 100, $filterlist = array(), $sortlist = array()){
+	switch($SQLType){
+		case 'mysql':
+			return listWithParamsMYSQL($db, $table, $page, $pagesize, $filterlist, $sortlist);
+		break;
+		case 'mssql':
+			return listWithParamsMSSQL($db, $table, $page, $pagesize, $filterlist, $sortlist);
+		break;
+		case 'pgsql':
+		case 'postgres':
+			return listWithParamsPGSQL($db, $table, $page, $pagesize, $filterlist, $sortlist);
+		break;
+		default:
+			return -1;
+	}
+}
 
 function openConf(){
 	global $dbtype,$server,$database,$user,$pass;
@@ -462,6 +623,14 @@ function listTablesConf($db, $database){
 function describeTableConf($db, $table){
 	global $dbtype;
 	return describeTableSQL($dbtype, $db, $table);
+}
+function listIndexedConf($db, $table){
+	global $dbtype;
+	return listIndexedSQL($dbtype, $db, $table);
+}
+function listWithParamsConf($db, $table, $page = 0, $pagesize = 100, $filterlist = array(), $sortlist = array()){
+	global $dbtype;
+	return listWithParamsSQL($dbtype, $db, $table, $page, $pagesize, $filterlist, $sortlist);
 }
 
 function safeFilename($pageName){

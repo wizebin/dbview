@@ -44,39 +44,17 @@
 			case 'list':
 				//table,sortby,filters,pagesize,page
 				
-				$table = escapeIdentifierConf($db, $params['table']);
-				$page = isset($params['page'])?escapeConf($db, $params['page']):'';
-				$pagesize = isset($params['pagesize'])?escapeConf($db, $params['pagesize']):'';
-				
 				$filters = isset($params['filters'])?json_decode($params['filters'],true):array(); // ['id'=>123]
 				$sortby = isset($params['sortby'])?json_decode($params['sortby'],true):array(); //['id'=>'DESC']
+				$page = isset($params['page'])?$params['page']:0;
+				$pagesize = isset($params['pagesize'])?$params['pagesize']:0;
+				$table = escapeIdentifierConf($db, $params['table']);
 				
-				$filtered = "";
-				$sortedby = "";
-				
-				if (count($filters)>0){
-					$filtered = " WHERE ";
-					$filterlist = array();
-					foreach($filters as $key => $val){
-						array_push($filterlist,escapeIdentifierConf($db,$key) . " LIKE " . escapeConf($db,$val));
-					}
-					$filtered .= implode( " AND ", $filterlist);
-				}
-				
-				if (count($sortby)>0){
-					$sortedby = " ORDER BY ";
-					$sortedlist = array();
-					foreach($sortby as $key => $val){
-						array_push($sortedlist,escapeIdentifierConf($db,$key) . " " . escapeConf($db,$val));
-					}
-					$sortedby .= implode(", ",$sortedlist);
-				}
-				
-				$qrey = "SELECT * FROM $table $filtered $sortedby";///TODO: paginate
-				$results = executeConf($db, $qrey);
+				$results = listWithParamsConf($db, $table, $page, $pagesize, $filters, $sortby);
 				
 				//if ($results){
 					$ret['RESULT']=$results;
+					$ret['LASTQREY']=$GLOBALS['LASTQREY'];
 				//}
 			
 				break;
@@ -170,6 +148,11 @@
 			case 'tables':
 				$database = escapeIdentifierConf($db, $params['database']);
 				$results = listTablesConf($db, $database);
+				$ret['RESULT']=$results;
+				break;
+			case 'indexes':
+				$table = escapeIdentifierConf($db, $params['table']);
+				$results = listIndexedConf($db, $table);
 				$ret['RESULT']=$results;
 				break;
 			case 'arbitrary':

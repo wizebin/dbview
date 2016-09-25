@@ -11,7 +11,8 @@
 	</head>
 
 	<body>
-		<div id="wrapper"><div style="float:right;padding:10px;"><button onclick="logout()">logout</button></div><a href="/" style=""><img src='resources/logo64.png' style="padding:5px;"></img></a></div><div style="overflow:hidden;"></div>
+		<div id="wrapper"><div style="float:right;padding:3px;"><button onclick="logout()" style="border:none;color:#cc1818;">logout</button></div><a href='/'><img src='resources/logo64.png' style="padding:5px;"></a><div style="position:absolute;right:3px;bottom:3px;white-space:nowrap" id="extraHeader"></div></div>
+		
 		<div id="content"></div>
 	
 		<script>
@@ -19,6 +20,9 @@
 			var password = valOrOther(getCookie('password'),'');
 			var settings = null;
 			var loggedin = false;
+			
+			var contentDiv = document.getElementById('content');
+			var menuDiv = null;
 			
 			var Settings = function(settingsFile){
 				this.loadSettings(settingsFile);
@@ -89,6 +93,7 @@
 			}
 			
 			function loadAndDisplayPage(pageName, parent){
+				document.getElementById('extraHeader').innerHTML='';
 				postJSON('php/loadpage.php','username='+username+'&password='+password+'&page='+pageName,function(data){
 					if (data['SUCCESS']){
 						displayPage(data['RESULT'],parent);

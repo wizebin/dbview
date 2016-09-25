@@ -1,12 +1,20 @@
 <style>
-	td,th{padding:20px; background-color:#f4f4f4;}
-	th{background-color:#eee;font-weight:normal;color:#888;}
+	table.mainTable td,table.mainTable th{background-color:#f4f4f4;}
+	table.mainTable td.tempSelected{background-color:#faf;}
+	table.mainTable td.tempSelected:hover{background-color:#ebe;cursor:pointer;}
+	table.mainTable td.indicateRow{background-color:#ffa;}
+	table.mainTable td.selectable:hover{background-color:#aaa;}
+	table.mainTable th{background-color:#eee;font-weight:normal;color:#888;white-space:nowrap;}
 	div.selectableDiv{padding:10px;border-bottom:1px solid #000;}
 	div.selectableDiv:hover{background-color:#aaa;}
 	table.fullWidthTable,button.fullWidthButton{width:100%;}
-	th.sortingASC{border-top:1px solid #000;}
-	th.sortingDESC{border-bottom:1px solid #000;}
-	
+	table.mainTable th.sortingASC{}
+	table.mainTable th.sortingDESC{}
+	table.mainTable th.sortable{background-color:#e5e5e5;}
+	table.mainTable th.sortingASC:hover, table.mainTable th.sortingDESC:hover, table.mainTable th.sortable:hover{cursor:pointer;background-color:#ddd;}
+	div.minorControls{padding:10px;border-bottom:1px solid #aaa;}
+	span.sortIndicator{display:inline-block;vertical-align:center;padding:5px;background-color:#ddd;color:#fff;}
+	span.sortOrdinal{display:inline-block;vertical-align:center;padding:5px;background-color:#fff;color:#aaa;}
 </style>
 
 <div id="tableView"></div>
@@ -30,6 +38,21 @@
 				failureCallback&&failureCallback(data);
 			}
 		},function(data){failureCallback&&failureCallback(data);});
+	}
+	function applyClassToChildren(parent, classname){
+		var ret = [];
+		if (typeof(classname)=='array' || typeof(classname)=='object'){
+			if (parent.childNodes.length == classname.length){
+				for(var a = 0; a < classname.length; a++){
+					ret.push(parent.childNodes[a].className);
+					parent.childNodes[a].className=classname[a];
+				}
+			}
+		}
+		else{
+			parent.childNodes.forEach(function(el){ret.push(el.className);el.className=classname;},this);
+		}
+		return ret;
 	}
 	function getSelectedText(element){
 		return element.options[element.selectedIndex].text
@@ -61,6 +84,7 @@
 		this.table='';
 		this.canwrite=false;
 		this.onlyIndexes=true;
+		this.clickFirstToDisplayObject=true;
 		this.cols = [];
 		this.page = 0;
 		this.pageSize = 50;
@@ -141,7 +165,7 @@
 			e = e || window.event;
 			if (e.keyCode == 13) {
 				tthis.addFilter(getSelectedText(tthis.subjectSelect),acceptableVerbList[getSelectedIndex(tthis.verbSelect)]['name'],tthis.objectInput.value);
-				this.shouldReturnToFirstPage=true;
+				tthis.shouldReturnToFirstPage=true;
 				tthis.initiateLoadAndDisplay();
 				tthis.objectInput.value='';
 			}
@@ -149,18 +173,18 @@
 		
 		if (this.submitButton==undefined)
 			this.submitButton = document.createElement('button');
-		this.submitButton.innerHTML = 'Display';
+		this.submitButton.innerHTML = 'Load';
 		this.submitButton.onclick=function(){tthis.initiateLoadAndDisplay();};
 		
 		if (this.filtersButton==undefined)
 			this.filtersButton = document.createElement('button');
-		this.filtersButton.innerHTML = 'Filters[' + this.filters.length +']';
+		this.filtersButton.innerHTML = '' + this.filters.length + ' Filters';
 		this.filtersButton.onclick=function(){tthis.editFilters();};
 		
-		if (this.sortsButton==undefined)
-			this.sortsButton = document.createElement('button');
-		this.sortsButton.innerHTML = 'Sort By';
-		this.sortsButton.onclick=function(){tthis.editSorts();};
+		//if (this.sortsButton==undefined)
+		//	this.sortsButton = document.createElement('button');
+		//this.sortsButton.innerHTML = 'Sort By';
+		//this.sortsButton.onclick=function(){tthis.editSorts();};
 		
 		if (this.fieldsButton==undefined)
 			this.fieldsButton = document.createElement('button');
@@ -169,6 +193,16 @@
 		
 		this.nextPageButton = makeOrClear(this.nextPageButton,'button');
 		this.nextPageButton.innerHTML = 'Next';
+		this.nextPageButton.onclick=function(){tthis.nextPage();};
+		
+		this.prevPageButton = makeOrClear(this.prevPageButton,'button');
+		this.prevPageButton.innerHTML = 'Prev';
+		this.prevPageButton.style.float='right';
+		this.prevPageButton.onclick=function(){tthis.prevPage();};
+		
+		this.nextPageButton = makeOrClear(this.nextPageButton,'button');
+		this.nextPageButton.innerHTML = 'Next';
+		this.nextPageButton.style.float='right';
 		this.nextPageButton.onclick=function(){tthis.nextPage();};
 		
 		this.prevPageButton = makeOrClear(this.prevPageButton,'button');
@@ -187,22 +221,39 @@
 		this.controlDiv.appendChild(this.objectInput);
 		addQuickSpacer(this.controlDiv,10);
 		this.controlDiv.appendChild(this.submitButton);
-		addQuickElement(this.controlDiv,'span','|',{'style':'display:inline-block;padding:5px 10px;'});
+		//addQuickElement(this.controlDiv,'span','|',{'style':'display:inline-block;padding:5px 10px;'});
+		addQuickSpacer(this.controlDiv,10);
 		this.controlDiv.appendChild(this.filtersButton);
 		addQuickSpacer(this.controlDiv,10);
-		this.controlDiv.appendChild(this.sortsButton);
-		addQuickSpacer(this.controlDiv,10);
+		//this.controlDiv.appendChild(this.sortsButton);
+		//addQuickSpacer(this.controlDiv,10);
 		this.controlDiv.appendChild(this.fieldsButton);
-		
-		addQuickElement(this.controlDiv,'span','|',{'style':'display:inline-block;padding:5px 20px;'});
-		this.controlDiv.appendChild(this.prevPageButton);
 		addQuickSpacer(this.controlDiv,10);
+		//addQuickElement(this.controlDiv,'span','|',{'style':'display:inline-block;padding:5px 20px;'});
+		
 		this.controlDiv.appendChild(this.nextPageButton);
-		addQuickSpacer(this.controlDiv,10);
+		//addQuickSpacer(this.controlDiv,10);
 		
-		var quantity = this.data.length;
-		addQuickElement(this.controlDiv,'span',''+(this.pageSize*this.page) +'-'+ (this.pageSize*(this.page)+quantity) + ' (page ' + (this.page+1) + ')',{'class':'infoLabel'});
+		this.controlDiv.appendChild(this.prevPageButton);
+		//addQuickSpacer(this.controlDiv,10);
 		
+		
+		
+		var extraHeader = document.getElementById('extraHeader');
+		if (extraHeader!=null){
+			extraHeader.innerHTML='';
+			
+			var quantity = this.data.length;
+			addQuickElement(extraHeader,'span','Page ' + (this.page+1),{'class':'infoLabel'});
+			var pageStart = (this.pageSize*this.page);
+			var pageEnd = (this.pageSize*(this.page)+quantity);
+			if (quantity==0){
+				pageStart='-';
+				pageEnd='-';
+			}
+			addQuickElement(extraHeader,'span',''+ pageStart +' to '+ pageEnd,{'class':'detailLabel'});
+		
+		}
 		
 		parent.appendChild(this.controlDiv);
 		
@@ -225,6 +276,7 @@
 		this.tableDiv.style.overflow='auto';
 		
 		this.tableView = makeOrClear(this.tableView,'table');
+		this.tableView.className='mainTable';
 		
 		this.headRow = makeOrClear(this.headRow,'tr');
 		
@@ -233,13 +285,25 @@
 		shown.forEach(function(el){			
 			var th = document.createElement('th');
 			th.innerHTML = el;
+			if (this.isColIndexed(el)||(!this.onlyIndexes)){
+				//allow clicking to sort
+				th.onclick=function(){
+					tthis.sortBy(el);
+				}
+				th.className='sortable';
+			}
 			var cursort = this.getSortDirectionForColumn(el);
 			if (cursort!=null){
+				var cardinal = this.getSortCardinalForColumn(el);
+				if (cardinal!=null)
+					cardinal += 1;
 				if (cursort=='DESC'){
-					th.className='sortingDESC';
+					//th.className='sortingDESC';
+					th.innerHTML+=" <span class='sortIndicator'>v</span><span class='sortOrdinal'>"+cardinal+"</span>";
 				}
 				else{
-					th.className='sortingASC'
+					//th.className='sortingASC'
+					th.innerHTML+=" <span class='sortIndicator'>^</span><span class='sortOrdinal'>"+cardinal+"</span>";
 				}
 			}
 			this.headRow.appendChild(th);
@@ -248,11 +312,43 @@
 		
 		this.tableView.appendChild(this.headRow);
 		
+		
+		
 		this.data.forEach(function(el){
 			var irow = document.createElement('tr');
+			var clickToDisplayObject = true;
 			shown.forEach(function(col){			
 				var td = document.createElement('td');
 				td.innerHTML = el[col];
+				prevClasses=[];
+				if (clickToDisplayObject){
+					td.className='selectable';
+					td.onmouseover=function(){
+						prevClasses=applyClassToChildren(irow,'tempSelected');
+					}
+					td.onmouseout=function(){
+						applyClassToChildren(irow,prevClasses);
+					}
+					if (this.canWrite){
+						td.onclick=function(){editSingleObject(el, function(updated){el=updated;tthis.initiateLoadAndDisplay();});};
+					}
+					else{
+						td.onclick=function(){displaySingleObject(el);};
+					}
+				}
+				else{
+					td.className='selectable';
+					td.onmouseover=function(){
+						prevClasses=applyClassToChildren(irow,'indicateRow');
+					}
+					td.onmouseout=function(){
+						applyClassToChildren(irow,prevClasses);
+					}
+					
+				}
+				if (this.clickFirstToDisplayObject){
+					clickToDisplayObject=false;
+				}
 				irow.appendChild(td);
 			},this);
 			this.tableView.appendChild(irow);
@@ -260,14 +356,6 @@
 		
 		this.tableDiv.appendChild(this.tableView);
 		parent.appendChild(this.tableDiv);
-	}
-	TableView.prototype.getSortDirectionForColumn = function(column){
-		var ret = null;
-		this.sorts.forEach(function(el){
-			if (el['col']==column)
-				ret=el['direction'];
-		},this);
-		return ret;
 	}
 	TableView.prototype.loadDataFromServer = function(successCallback, failureCallback){
 		if (this.shouldReturnToFirstPage){
@@ -294,26 +382,61 @@
 		var tthis = this;
 		displayForDeletion(this.filters, function(newfilters){
 			tthis.filters=newfilters;
-			this.shouldReturnToFirstPage=true;
+			tthis.shouldReturnToFirstPage=true;
 			tthis.initiateLoadAndDisplay();
 		});
+	}
+	TableView.prototype.sortBy = function(choice, soloSort){
+		var foundIndex = null;
+		
+		var newsort = {'col':choice,'direction':'ASC'};
+		
+		if (soloSort===true){
+			this.sorts = [newsort];
+		}
+		else{
+			//find the choice in the current sort list, if it is found reverse the direction and make it the first sort object
+			
+			if (this.sorts.length>0){
+				this.sorts.forEach(function(curSort, curIndex){
+					if (curSort['col']==choice){
+						foundIndex = curIndex
+						if (curIndex==0){
+							if (curSort['direction']=='ASC')
+								curSort['direction']='DESC';
+							else
+								curSort['direction']='ASC';
+						}
+						else{
+							var tmp = this.sorts[foundIndex];
+							this.sorts[foundIndex]=this.sorts[0];
+							this.sorts[0]=tmp;
+						}
+					}
+				},this);
+			}
+			
+			//if it is not found, add it to the front, and limit the size of the sort array to two
+			
+			if (foundIndex==null){
+				if (this.sorts.length>0){
+					this.sorts.unshift(newsort);
+					if (this.sorts.length>2){
+						this.sorts=this.sorts.slice(0,2);
+					}
+				}
+				else{
+					this.sorts = [newsort];
+				}
+			}
+		}
+		this.shouldReturnToFirstPage=true;
+		this.initiateLoadAndDisplay();
 	}
 	TableView.prototype.editSorts = function(){
 		var tthis = this;
 		chooseFromList(this.getIndexedCols(),function(choice){
-			var sorty = 'ASC';
-			var cursort = tthis.sorts;
-			if (cursort.length>0){
-				if (cursort.length==1){
-					if (cursort[0]['col']==choice){
-						if (cursort[0]['direction']==sorty)
-							sorty = 'DESC';
-					}
-				}
-			}
-			tthis.sorts = [{'col':choice,'direction':sorty}];
-			this.shouldReturnToFirstPage=true;
-			tthis.initiateLoadAndDisplay();
+			tthis.sortBy(choice);
 		});
 	}
 	TableView.prototype.editFields = function(){
@@ -353,6 +476,26 @@
 			}
 		},this);
 		return ret;
+	}
+	TableView.prototype.getSortDirectionForColumn = function(column){
+		var ret = null;
+		this.sorts.forEach(function(el){
+			if (el['col']==column)
+				ret=el['direction'];
+		},this);
+		return ret;
+	}
+	TableView.prototype.getSortCardinalForColumn = function(column){
+		var ret = null;
+		this.sorts.forEach(function(el, dex){
+			if (el['col']==column)
+				ret=dex;
+		},this);
+		return ret;
+	}
+	TableView.prototype.isColIndexed = function(col){
+		var indexed = this.getIndexedCols();
+		return (indexed.includes(col));
 	}
 	
 	TableView.prototype.initiateLoadAndDisplay = function(){
@@ -455,7 +598,7 @@
 		noneButton.innerHTML='None';
 		
 		var idiv = document.createElement('div');
-		idiv.className='controls';
+		idiv.className='minorControls';
 		idiv.appendChild(acceptButton);
 		addQuickSpacer(idiv,30);
 		idiv.appendChild(allButton);
@@ -476,7 +619,7 @@
 			var todelete = [];
 			var keys = getObjectKeys(list[0]);	
 			var table = document.createElement('table');
-			table.className='fullWidthTable';
+			table.className='mainTable';
 			
 			var thr = document.createElement('tr');
 			keys.forEach(function(key){
@@ -511,7 +654,7 @@
 			acceptButton.onclick=function(){
 				todelete.sort(sortNumber);
 				for(var a = todelete.length-1; a>=0; a--){
-					list.splice(todelete[a]);
+					list.splice(todelete[a],1);
 				}
 				closeModal();
 				acceptCallback(list);
@@ -520,7 +663,7 @@
 			var div = document.createElement('div');
 			div.appendChild(table);
 			var cdiv = document.createElement('div');
-			cdiv.className='controls';
+			cdiv.className='minorControls';
 			cdiv.appendChild(acceptButton);
 			div.appendChild(cdiv);
 			showModal(div);
@@ -594,6 +737,10 @@
 			displayAble.appendChild(hr);
 		},this);
 		showModal(displayAble);
+	}
+	
+	function editSingleObject(obj, callback){
+		//nothing;
 	}
 	
 	function modalEditFields(){

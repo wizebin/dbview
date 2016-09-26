@@ -98,7 +98,8 @@
 			requestFromController('indexes',{"table":table},function(data){
 				var indexed = data;
 				indexed.forEach(function(el){
-					tthis.cols[el['column_name']]['indexed']=true
+					var name = el['column_name'];
+					tthis.cols[name]['indexed']=true
 				},tthis);//only valid for pgsql
 				successCallback&&successCallback();
 			},function(data){

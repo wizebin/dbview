@@ -53,10 +53,10 @@ function openMSSQL($server, $username, $password, $database = '', $port = null){
 	return $conn;
 }
 function executeMYSQL($db, $query){
-	$result = $idb->query($query);
+	$result = $db->query($query);
 	
 	if($result==null){
-		noteError("iquery error ".mysqli_errno($idb)." : ".mysqli_error($idb));
+		noteError($query . " iquery error ".mysqli_errno($db)." : ".mysqli_error($db));
 	}
 	else if ($result && gettype($result)!='boolean'){
 		$retval = array();
@@ -272,7 +272,10 @@ function escapeIdentifierMSSQL($dbHandle, $data){
 }
 
 function listTablesMYSQL($db, $database){
-	return executeMYSQL($db, "SHOW TABLES IN " . $database);
+	$catalog='';
+	if ($database!=null)
+		$catalog= " IN $database";
+	return executeMYSQL($db, "SHOW TABLES$catalog;");
 }
 function listTablesPGSQL($db, $database){
 	$catalog='';
@@ -285,7 +288,7 @@ function listTablesMSSQL($db ,$database){
 }
 
 function describeTableMYSQL($db, $table){
-	return executeMYSQL($db, "DESCRIBE $table");
+	return executeMYSQL($db, "SELECT `COLUMN_NAME` as 'column_name' FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`=DATABASE() AND `TABLE_NAME`='$table';");
 }
 function describeTablePGSQL($db, $table){
 	return executePGSQL($db, "select * from INFORMATION_SCHEMA.COLUMNS where table_name = '$table';");
@@ -295,7 +298,7 @@ function describeTableMSSQL($db, $table){
 }
 
 function listIndexedMYSQL($db, $table){
-	return executeMYSQL($db, "SHOW INDEXES FOR $table");
+	return executeMYSQL($db, "SELECT table_schema as 'table_schema', index_name as 'index_name', column_name as 'column_name' FROM information_schema.statistics WHERE table_name = '$table' AND table_schema = DATABASE()");
 }
 function listIndexedPGSQL($db, $table){
 	return executePGSQL($db, "select t.relname as table_name, i.relname as index_name, a.attname as column_name from pg_class t, pg_class i, pg_index ix, pg_attribute a where t.oid = ix.indrelid and i.oid = ix.indexrelid and a.attrelid = t.oid and a.attnum = ANY(ix.indkey) and t.relkind = 'r' and t.relname like '$table' order by t.relname, i.relname;");
@@ -308,20 +311,25 @@ function listIndexedMSSQL($db, $table){
 $verbMap = array('eq'=>'=','not_eq'=>'!=','lt'=>'<','gt'=>'>','gteq'=>'>=','lteq'=>'<=');
 $valModifyingVerbMap = array('cont'=>'LIKE','start'=>'LIKE','end'=>'LIKE','i_cont'=>'ILIKE');//ilike only works with postgresql
 $specialVerbMap = array('present','blank','null','not_null');
-function getFilterFromDataPGSQL($db, $unescapedcol, $word, $unescapedval){
+function getFilterFromDataMYPGSQL($db, $unescapedcol, $word, $unescapedval, $ismysql){
 	global $verbMap,$valModifyingVerbMap,$specialVerbMap;
-	$col = escapeIdentifierPGSQL($db,$unescapedcol);
+	$col = $ismysql?escapeIdentifierMYSQL($db,$unsecapedcol):escapeIdentifierPGSQL($db,$unescapedcol);
 	$verb = '';
 	if (array_key_exists($word,$verbMap)){
 		$verb = $verbMap[$word];
-		$val = escapePGSQL($db,$unescapedval);
+		$val = $ismysql?escapeMYSQL($db,$unescapedval):escapePGSQL($db,$unescapedval);
 		return $col . ' ' . $verb . ' ' . $val;
 	}
 	else if (array_key_exists($word,$valModifyingVerbMap)){
 		$modifiedval = $unescapedval;
 		$verb = $valModifyingVerbMap[$word];
-		if ($word=='cont'||$word=='icont'){
+		if ($word=='cont'){
 			$modifiedval = '%'.$unescapedval.'%';
+		}
+		else if ($word=='icont'){
+			$modifiedval = '%'.$unescapedval.'%';
+			if ($ismysql)
+				$verb = 'LIKE';
 		}
 		else if ($word=='start'){
 			$modifiedval = $unescapedval.'%';
@@ -330,7 +338,7 @@ function getFilterFromDataPGSQL($db, $unescapedcol, $word, $unescapedval){
 			$modifiedval = '%'.$unescapedval;
 		}
 		
-		$val = escapePGSQL($db,$modifiedval);
+		$val = $ismysql?escapeMYSQL($db,$modifiedval):escapePGSQL($db,$modifiedval);
 		return $col . ' ' . $verb . ' ' . $val;
 	}
 	else if (in_array($word,$specialVerbMap)){
@@ -352,7 +360,59 @@ function getFilterFromDataPGSQL($db, $unescapedcol, $word, $unescapedval){
 }
 
 function listWithParamsMYSQL($db, $table, $page = 0, $pagesize = 100, $filterlist = array(), $sortlist = array()){
+	$filterStatement = "";
+	$sortStatement = "";
+	$limitStatement = "";
 	
+	$filterFinalList = array();
+	$sortFinalList = array();
+	
+	if (is_array($filterlist) && count($filterlist) > 0){
+		if (array_key_exists('sub',$filterlist)&&array_key_exists('verb',$filterlist)){
+			$filterlist = array($filterlist);
+		}
+		foreach($filterlist as $filter){
+			$addfilter = getFilterFromDataMYPGSQL($db, $filter['sub'], $filter['verb'], isset($filter['obj'])?$filter['obj']:'',true);
+			if ($addfilter != null){
+				array_push($filterFinalList,$addfilter);
+			}
+		}
+	}
+	if (count($filterFinalList)>0){
+		$filterStatement = 'WHERE ' . implode(' AND ',$filterFinalList);
+	}
+	
+	if (is_array($sortlist) && count($sortlist) > 0){
+		if (array_key_exists('col',$sortlist)){
+			$sortlist = array($sortlist);
+		}
+		foreach($sortlist as $sort){
+			$col = escapeIdentifierMYSQL($db,$sort['col']);
+			if (isset($sort['direction'])){
+				$dir = $sort['direction'];
+				if (strtolower($dir)=='desc'){
+					array_push($sortFinalList,$col . ' DESC');
+				}
+				else{
+					array_push($sortFinalList,$col . ' ASC');
+				}
+			}
+			else{
+				array_push($sortFinalList,$col);
+			}
+		}
+	}
+	
+	if (count($sortFinalList)>0){//MAY NEED TO DO INNER QUERY IF LIMIT IS ALSO INCLUDED
+		$sortStatement = "ORDER BY " . implode(', ',$sortFinalList);
+	}
+	
+	if ($page!=null && $pagesize !=null && is_numeric($page) && is_numeric($pagesize)){ 
+		$limitStatement = "LIMIT ".round($pagesize)." OFFSET ". round($page*$pagesize);
+	}
+	
+	$qrey = "SELECT * FROM $table $filterStatement $sortStatement $limitStatement;";
+	return executeMYSQL($db, $qrey);
 }
 function listWithParamsPGSQL($db, $table, $page = 0, $pagesize = 100, $filterlist = array(), $sortlist = array()){
 	$filterStatement = "";
@@ -367,7 +427,7 @@ function listWithParamsPGSQL($db, $table, $page = 0, $pagesize = 100, $filterlis
 			$filterlist = array($filterlist);
 		}
 		foreach($filterlist as $filter){
-			$addfilter = getFilterFromDataPGSQL($db, $filter['sub'], $filter['verb'], isset($filter['obj'])?$filter['obj']:'');
+			$addfilter = getFilterFromDataMYPGSQL($db, $filter['sub'], $filter['verb'], isset($filter['obj'])?$filter['obj']:'',false);
 			if ($addfilter != null){
 				array_push($filterFinalList,$addfilter);
 			}
@@ -407,7 +467,6 @@ function listWithParamsPGSQL($db, $table, $page = 0, $pagesize = 100, $filterlis
 	}
 	
 	$qrey = "SELECT * FROM $table $filterStatement $sortStatement $limitStatement;";
-	$GLOBALS['LASTQREY']=$qrey;
 	return executePGSQL($db, $qrey);
 }
 function listWithParamsMSSQL($db, $table, $page = 0, $pagesize = 100, $filterlist = array(), $sortlist = array()){

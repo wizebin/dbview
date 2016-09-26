@@ -3,7 +3,7 @@ $SETTINGS_DIR = dirname(__FILE__).'/settings/';
 $SETTINGS_FILE = $SETTINGS_DIR.'settings.json';
 
 if (!is_dir($SETTINGS_DIR)){
-	mkdir($SETTINGS_DIR,0777,true);//need permissions to create this directory
+	mkdir($SETTINGS_DIR,0600,true);
 }
 
 $allowable = array('indexedOnly','rootOfPage','masterUsername','masterPassword','dbtype','server','database','user','pass','credentialServerType','credentialServer','credentialDatabase','credentialUsername','credentialPassword','credentialTable','credentialUserColumn','credentialPassColumn','credentialAdminColumn','userRO','passRO','mainTable','tableList');

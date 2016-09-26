@@ -21,7 +21,6 @@
 		}
 		
 		$db = openConf();
-		
 		if ($db==null){
 			$ret['SUCCESS']=false;
 		}

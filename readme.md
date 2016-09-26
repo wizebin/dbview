@@ -41,18 +41,18 @@ configuration skeleton:
 		"indexedOnly":true,
 	}
 	
-*`dbtype` is the database type, it can be either mysql, pgsql, or mssql
-*`server` is the address of the db server
-*`database` is the root database for this configuration
-*`table` is the root table for this configuration
-*`user` & `pass` are the db username and password for accessing the db
+* `dbtype` is the database type, it can be either mysql, pgsql, or mssql
+* `server` is the address of the db server
+* `database` is the root database for this configuration
+* `table` is the root table for this configuration
+* `user` & `pass` are the db username and password for accessing the db
 
 the credential subset is where you have the users who will use this page stored, this can be a completely separate db from your normal db
 
-*`credentialUserColumn` is the username column to match up with the login username
-*`credentialPassColumn` is the password column to match up with the login password
-*`credentialAdminColumn` is the column that stores the account security level of that user, which is currently the method that determines admin access (>=100)
+* `credentialUserColumn` is the username column to match up with the login username
+* `credentialPassColumn` is the password column to match up with the login password
+* `credentialAdminColumn` is the column that stores the account security level of that user, which is currently the method that determines admin access (>=100)
 
-*`indexedOnly` indicates the ability to sort/search be restricted to those columns that are indexed
+* `indexedOnly` indicates the ability to sort/search be restricted to those columns that are indexed
 
 

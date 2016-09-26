@@ -7,7 +7,7 @@
 global $ret;
 if ($success){
 	$page = safeFilename($params['page']);
-	$root = 'settings/';
+	$root = dirname(__FILE__).'/settings/';
 	$page = $root.$page.'.json';
 			
 	if (file_exists($page)){

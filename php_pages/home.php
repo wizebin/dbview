@@ -20,7 +20,17 @@
 <div id="tableView"></div>
 
 <script type="text/javascript">
-
+	//verbs include VERB(required param list)
+	
+	//get(table,idlabel,id)
+	//list(table,filters,sortby,page,pagesize)
+	//update(table,idlabel,id)
+	//create(table,data:json)
+	//delete(table,idlabel,id)
+	//describe(table)
+	//tables(database)
+	//indexes(table)
+	
 	function requestFromController(verb, properties, successCallback, failureCallback){
 		var props = [];
 		var keys = getObjectKeys(properties);
@@ -39,6 +49,7 @@
 			}
 		},function(data){failureCallback&&failureCallback(data);});
 	}
+	//applies a class to all children of an element, and returns their current class, use that return as the classname to restore the previous state
 	function applyClassToChildren(parent, classname){
 		var ret = [];
 		if (typeof(classname)=='array' || typeof(classname)=='object'){
@@ -80,25 +91,28 @@
 	var acceptableVerbs = ['eq','not_eq','lt','gt','gteq','lteq','cont','start','end','i_cont','present','blank','null','not_null'];
 
 	var TableView = function(){
-		this.data=[];
+		this.data=   [];
+		this.filters=[];
+		this.sorts=  [];
+		this.cols =  {};
 		this.table='';
-		this.canwrite=false;
+		this.page=0;
+		this.pageSize=50;
+		this.canWrite=false;
 		this.onlyIndexes=true;
 		this.clickFirstToDisplayObject=true;
-		this.cols = [];
-		this.page = 0;
-		this.pageSize = 50;
-		this.filters=[];
-		this.sorts=[];
 		this.shouldReturnToFirstPage=false;
 	}
-	TableView.prototype.loadModelFromServer = function(table, canwrite, successCallback, failureCallback){
-		this.table = table;
-		this.canwrite=canwrite;
-		this.page=0;
+	
+	//3 steps to successfully displaying data: loadModelFromServer, loadDataFromServer, display
+	
+	TableView.prototype.loadModelFromServer = function(table, canWrite, successCallback, failureCallback){
 		this.filters=[];
-		this.data=[];
-		this.sorts=[];
+		this.data=   [];
+		this.sorts=  [];
+		this.table = table;
+		this.canWrite=canWrite;
+		this.page=0;
 		var tthis = this;
 		requestFromController('describe',{"table":table},function(data){
 			tthis.cols = {};
@@ -120,20 +134,28 @@
 			});
 		},function(data){
 			failureCallback&&failureCallback(data);
-		});
-		
+		});	
 	}
 	TableView.prototype.addFilter = function(subject, verb, object){
-		var obj = {};
-		obj['sub']=subject;
-		obj['verb']=verb;
-		obj['obj']=object;
-		this.filters.push(obj);
+		var found = false;
+		this.filters.forEach(function(el){
+			if (el['sub']==subject&&el['verb']==verb&&el['obj']==object)
+				found=true;
+		},this);
+		if (!found){
+			var obj = {};
+			obj['sub']=subject;
+			obj['verb']=verb;
+			obj['obj']=object;
+			this.filters.push(obj);
+			return true;
+		}
+		return false;//already added
 	}
 	TableView.prototype.display = function(parent){
 		var tthis = this;
 		this.parent = parent;
-		//hard way for now
+		//hard way for now, the react way later
 		
 		this.subjectSelect = makeOrClear(this.subjectSelect,'select');
 		
@@ -221,22 +243,14 @@
 		this.controlDiv.appendChild(this.objectInput);
 		addQuickSpacer(this.controlDiv,10);
 		this.controlDiv.appendChild(this.submitButton);
-		//addQuickElement(this.controlDiv,'span','|',{'style':'display:inline-block;padding:5px 10px;'});
 		addQuickSpacer(this.controlDiv,10);
 		this.controlDiv.appendChild(this.filtersButton);
 		addQuickSpacer(this.controlDiv,10);
-		//this.controlDiv.appendChild(this.sortsButton);
-		//addQuickSpacer(this.controlDiv,10);
 		this.controlDiv.appendChild(this.fieldsButton);
 		addQuickSpacer(this.controlDiv,10);
-		//addQuickElement(this.controlDiv,'span','|',{'style':'display:inline-block;padding:5px 20px;'});
 		
 		this.controlDiv.appendChild(this.nextPageButton);
-		//addQuickSpacer(this.controlDiv,10);
-		
 		this.controlDiv.appendChild(this.prevPageButton);
-		//addQuickSpacer(this.controlDiv,10);
-		
 		
 		
 		var extraHeader = document.getElementById('extraHeader');
@@ -258,7 +272,7 @@
 		parent.appendChild(this.controlDiv);
 		
 		
-		if (this.canwrite){
+		if (this.canWrite){
 			if (this.addButton==undefined)
 				this.addButton = document.createElement('button');
 			this.addButton.innerHTML = 'Add';

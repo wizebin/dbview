@@ -18,6 +18,7 @@ function addQuickElement(parent, element, content, props){
 		},this);
 	}
 	parent.appendChild(el);
+	return el;
 }
 
 function prependElement(parent,child){

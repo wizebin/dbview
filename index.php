@@ -78,6 +78,7 @@
 						successCallback&&successCallback(data['RESULT']);
 					}
 					else{
+						
 						loggedin = false;
 						failureCallback&&failureCallback(data);
 					}
@@ -154,7 +155,11 @@
 				setCredentials(document.getElementById('username').value, document.getElementById('password').value);
 				smartLogin();
 			}
-			function displayLogin(){
+			function displayLoginOrSetup(){
+				if (!systemIsConfigured){
+					loadAndDisplayPage('config');
+				}
+			
 				displayPage('<div id="loginbox"><div><input type="username" id="username" placeholder="username"></input><br /><input type="password" id="password" placeholder="password"></input></div><button onclick="executeLogin()">Login</button></div>');
 				document.getElementById('password').onkeydown = function(e) {
 					e = e || window.event;
@@ -171,12 +176,12 @@
 					if (!automated){
 						easyNotify('FAILED TO LOGIN '+JSON.stringify(data));
 					}
-					displayLogin();
+					displayLoginOrSetup();
 				});
 			}
 			function logout(){
 				setCredentials(null,null);
-				displayLogin();
+				displayLoginOrSetup();
 			}
 			
 			smartLogin(true);

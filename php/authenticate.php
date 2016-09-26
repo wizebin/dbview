@@ -6,8 +6,16 @@
 ?><?php
 global $ret;
 if ($success){
-	$ret['SUCCESS']=true;
-	$ret['SECURITY_LEVEL']=$GLOBALS['seclevel'];
+	if (isset($GLOBALS['systemConfigured']) && $GLOBALS['systemConfigured']){
+		$ret['SUCCESS']=true;
+		$ret['SECURITY_LEVEL']=$GLOBALS['seclevel'];
+		$ret['SYSTEM_READY']=true;
+	}
+	else{
+		$ret['SUCCESS']=false;
+		$ret['WARNING']='System Not Yet Configured';
+		$ret['SYSTEM_READY']=false;
+	}
 }
 else{
 	$ret['MISSING']=$missing;

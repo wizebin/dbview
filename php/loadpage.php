@@ -5,19 +5,20 @@
 	include "secbase.php";
 ?><?php
 global $ret;
-if ($success){
+$systemNotSetup = (isset($GLOBALS['systemConfigured']) && $GLOBALS['systemConfigured']==false);
+if ($success||($systemNotSetup&&count($missing)==0)){
 	$page = safeFilename($params['page']);
-	$root = '../php_pages/';
+	$root = dirname(__FILE__).'/../php_pages/';
 	
 	if (isset($params['root'])){
 		if ($params['root']=='home'){
 			$root = $home;
 		}
 		else if ($params['root']=='here'){
-			$root = '';
+			$root = dirname(__FILE__).'/';
 		}
 		else if ($params['root']=='settings'){
-			$root = 'settings/';
+			$root = dirname(__FILE__).'/settings/';
 		}
 	}
 	

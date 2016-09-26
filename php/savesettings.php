@@ -5,9 +5,10 @@
 	include "secbase.php";
 ?><?php
 global $ret;
-if ($success){
+$systemNotSetup = (isset($GLOBALS['systemConfigured']) && $GLOBALS['systemConfigured']==false);
+if ($success||($systemNotSetup)){
 	$page = safeFilename($params['page']);
-	$root = 'settings/';
+	$root = dirname(__FILE__).'/settings/';
 	$page = $root.$page.'.json';
 	$res = file_put_contents($page,$params['data']);
 	if ($res){

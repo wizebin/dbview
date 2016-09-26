@@ -54,7 +54,7 @@
 				
 				//if ($results){
 					$ret['RESULT']=$results;
-					$ret['LASTQREY']=$GLOBALS['LASTQREY'];
+					//$ret['LASTQREY']=$GLOBALS['LASTQREY'];
 				//}
 			
 				break;

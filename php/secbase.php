@@ -29,6 +29,7 @@ if($success){
 		$username=$params['username'];
 		$password=$params['password'];
 		$verified = checkAdminLevel($securityRequired);
+		
 		if ($verified){
 			$success=true;
 			$ret['SECURED']=true;
@@ -36,7 +37,7 @@ if($success){
 		else{
 			$success=false;
 			$ret['SECURED']=false;
-			$ret['ERROR']='UNAUTHENTICATED';
+			$ret['ERRORS']=$GLOBALS['messages'];
 		}
 		
 	}

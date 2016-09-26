@@ -135,7 +135,7 @@
 		var colkeys = getObjectKeys(this.cols);
 		colkeys.forEach(function(key){
 			var el = this.cols[key];
-			if (el['indexed']){
+			if (el['indexed']||(!this.onlyIndexes)){
 				var colbuf = document.createElement('option');
 				colbuf.text = el['column_name'];//only valid for pgsql
 				this.subjectSelect.appendChild(colbuf);

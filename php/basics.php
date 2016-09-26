@@ -313,7 +313,7 @@ $valModifyingVerbMap = array('cont'=>'LIKE','start'=>'LIKE','end'=>'LIKE','i_con
 $specialVerbMap = array('present','blank','null','not_null');
 function getFilterFromDataMYPGSQL($db, $unescapedcol, $word, $unescapedval, $ismysql){
 	global $verbMap,$valModifyingVerbMap,$specialVerbMap;
-	$col = $ismysql?escapeIdentifierMYSQL($db,$unsecapedcol):escapeIdentifierPGSQL($db,$unescapedcol);
+	$col = $ismysql?escapeIdentifierMYSQL($db,$unescapedcol):escapeIdentifierPGSQL($db,$unescapedcol);
 	$verb = '';
 	if (array_key_exists($word,$verbMap)){
 		$verb = $verbMap[$word];

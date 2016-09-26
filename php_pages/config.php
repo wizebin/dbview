@@ -164,7 +164,7 @@
 		{'name':'credentialAdminColumn','alias':'Credentials Security Level Column','type':'string'},
 		{'type':'divider'},
 		{'alias':'Extra Configuration','type':'title'},
-		{'name':'indexedOnly','alias':'Sort/Search By Indexed Columns Only','type':'bool'},
+		{'name':'indexedOnly','alias':'Sort/Search By Indexed Columns Only','type':'bool','initial':false},
 		{'name':'rootOfPage','alias':'Web Facing Page Root','type':'string'}
 	];
 	

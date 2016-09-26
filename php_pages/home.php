@@ -20,35 +20,7 @@
 <div id="tableView"></div>
 
 <script type="text/javascript">
-	//verbs include VERB(required param list)
 	
-	//get(table,idlabel,id)
-	//list(table,filters,sortby,page,pagesize)
-	//update(table,idlabel,id)
-	//create(table,data:json)
-	//delete(table,idlabel,id)
-	//describe(table)
-	//tables(database)
-	//indexes(table)
-	
-	function requestFromController(verb, properties, successCallback, failureCallback){
-		var props = [];
-		var keys = getObjectKeys(properties);
-		keys.forEach(function(key){
-			props.push("&"+encodeURIComponent(key)+"="+encodeURIComponent(properties[key]));
-		},this);
-		
-		var propstring = props.join("");
-		
-		postJSON('php/controller.php','verb='+verb+'&username='+username+'&password='+password+propstring,function(data){
-			if (data['SUCCESS']){
-				successCallback&&successCallback(data['RESULT']);
-			}
-			else{
-				failureCallback&&failureCallback(data);
-			}
-		},function(data){failureCallback&&failureCallback(data);});
-	}
 	//applies a class to all children of an element, and returns their current class, use that return as the classname to restore the previous state
 	function applyClassToChildren(parent, classname){
 		var ret = [];
@@ -99,7 +71,7 @@
 		this.page=0;
 		this.pageSize=50;
 		this.canWrite=false;
-		this.onlyIndexes=true;
+		this.onlyIndexes=indexedOnly;//true;
 		this.clickFirstToDisplayObject=true;
 		this.shouldReturnToFirstPage=false;
 	}
@@ -514,7 +486,7 @@
 	
 	TableView.prototype.initiateLoadAndDisplay = function(){
 		var tthis = this;
-		this.loadDataFromServer(function(){tthis.display(tthis.parent);},function(data){easyNotify('Failed To Load Table' + data);});
+		this.loadDataFromServer(function(){tthis.display(tthis.parent);},function(data){easyNotify('Failed To Load Table' + JSON.stringify(data));});
 	}
 	TableView.prototype.nextPage = function(){
 		this.page++;
@@ -537,10 +509,10 @@
 	var tableView = new TableView();
 	
 	function reloadPage(){
-		tableView.loadModelFromServer('eventbus_events',false,function(){
+		tableView.loadModelFromServer(mainTable,false,function(){
 			tableView.display(document.getElementById('tableView'));
 		},function(data){
-			easyNotify('failed to load table ' + data);
+			easyNotify('failed to load table ' + JSON.stringify(data));
 		});
 	}
 	
@@ -554,9 +526,9 @@
 				tableView.displayIn(document.getElementById('tableView'));
 			}
 			else{
-				easyNotify('Failed to load table view ' + data);
+				easyNotify('Failed to load table view ' + JSON.stringify(data));
 			}
-		},function(data){easyNotify('Failed to load table view ' + data);});
+		},function(data){easyNotify('Failed to load table view ' + JSON.stringify(data));});
 	}
 	
 	//edit checklist

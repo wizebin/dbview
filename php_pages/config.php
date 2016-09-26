@@ -12,19 +12,28 @@
 	SettingsSection = function(){
 		this.data = [];
 		this.result = {};
+		this.associative = {};
 	}
 	SettingsSection.prototype.loadFromArray = function(ray){
-		this.data = ray;
+		//this.data = ray;
 		this.result = {};
-		ray.forEach(function(el){this.createResultEntry(el);},this);
+		ray.forEach(function(el){this.addSetting(el);},this);
 	}
 	SettingsSection.prototype.createResultEntry = function(setting){
-		if (setting.hasOwnProperty('name'))
-			this.result[setting['name']]=null;
+		if (setting.hasOwnProperty('name')){
+			if (setting.hasOwnProperty('initial')){
+				this.result[setting['name']]=setting['initial'];
+			}
+			else{
+				this.result[setting['name']]=null;
+			}
+		}
 	}
 	SettingsSection.prototype.addSetting = function(setting){
 		this.data.push(setting);
 		this.createResultEntry(setting);
+		if (setting.hasOwnProperty('name'))
+			this.associative[setting['name']]=this.data[this.data.length-1];
 	}
 	SettingsSection.prototype.addSettingByType = function(name, alias, type, data){
 		this.addSetting({'name':name,'alias':alias,'type':type,'data':data});
@@ -56,6 +65,9 @@
 				var handled = false;
 				if (datum['type']=='string'){
 					var entry = document.createElement('input');
+					if (datum.hasOwnProperty('initial')){
+						entry.value=datum['initial'];
+					}
 					entry.oninput=function(){
 						tthis.result[datum['name']]=entry.value;
 						datum['callback']&&datum['callback'](datum['name'],entry.value);
@@ -73,6 +85,11 @@
 						ichoice.type='radio';
 						ichoice.name=datum['name'];
 						ichoice.value=choice;
+						if (datum.hasOwnProperty('initial')){
+							if (datum['initial']==choice){
+								ichoice.checked=true;
+							}
+						}
 						
 						ichoice.onclick=function(){
 							tthis.result[datum['name']]=choice;
@@ -89,6 +106,9 @@
 				else if (datum['type']=='bool'){
 					var checker = document.createElement('input');
 					checker.type='checkbox';
+					if (datum.hasOwnProperty('initial')){
+						checker.checked=datum['initial'];
+					}
 					checker.onclick=function(){
 						tthis.result[datum['name']]=checker.checked;
 						datum['callback']&&datum['callback'](datum['name'],checker.checked);
@@ -107,11 +127,12 @@
 		element.appendChild(this.div);
 	}
 	
-	var section = [
+	var sections = [
 		{'alias':'Database Information','type':'title'},
 		{'name':'dbtype','alias':'Database Type','type':'singleChoice','data':['mysql','mssql','pgsql']},
 		{'name':'server','alias':'Server','type':'string'},
 		{'name':'database','alias':'Database','type':'string'},
+		{'name':'mainTable','alias':'Table','type':'string'},
 		{'name':'user','alias':'Username','type':'string'},
 		{'name':'pass','alias':'Password','type':'string'},
 		{'type':'divider'},
@@ -147,46 +168,94 @@
 		{'name':'rootOfPage','alias':'Web Facing Page Root','type':'string'}
 	];
 	
-	//var sections = [section1, section2 , section3, section4];
+	function saveSettings(successCallback,failureCallback){
+		postJSON('php/savesettings.php','username='+username+'&password='+password+'&page=settings&data='+encodeURIComponent(JSON.stringify(sec.result)),function(data){
+			if (data['SUCCESS']){
+				successCallback&&successCallback(data);
+			}
+			else{
+				failureCallback&&failureCallback(data);
+			}
+		},function(data){
+			failureCallback&&failureCallback(data);
+		});
+	}
 	
-	var settingsDiv = document.getElementById('settingsDiv');
+	var sec = new SettingsSection();
 	
-	//sections.forEach(function(section){
-		var sec = new SettingsSection();
-		sec.loadFromArray(section);
+	function loadPage(){
+		var settingsDiv = document.getElementById('settingsDiv');
+
+		sec.loadFromArray(sections);
 		sec.display(settingsDiv);
-		//addQuickElement(settingsDiv,'hr');
-	//});
-	
-	var acceptButton = addQuickElement(document.getElementById('controlsDiv'),'button','Accept Configuration',{'id':'acceptButton'});
-	addQuickElement(controlsDiv,'span',' ');
-	var testButton = addQuickElement(document.getElementById('controlsDiv'),'button','Test Configuration',{'id':'testButton'});
-	acceptButton.onclick=function(){
-		if(sec.result['masterUsername']==null||sec.result['masterPassword']==null){
-			easyNotify('Must Set Master Credentials');
-		}
-		else if (sec.result['dbtype']==null||sec.result['server']==null||sec.result['database']==null||sec.result['user']==null||sec.result['server']==null||sec.result['pass']==null){
-			easyNotify('Must Set Database Information');
-		}
-		else{
-			postJSON('php/savesettings.php','page=settings&data='+encodeURIComponent(JSON.stringify(sec.result)),function(data){
-				if (data['SUCCESS']){
-					easyNotify('Saved Settings, Rerouting');
+		
+		var acceptButton = addQuickElement(document.getElementById('controlsDiv'),'button','Accept Configuration',{'id':'acceptButton'});
+		
+		addQuickElement(controlsDiv,'span',' ');
+		
+		var testButton = addQuickElement(document.getElementById('controlsDiv'),'button','Test Configuration',{'id':'testButton'});
+		
+		addQuickElement(controlsDiv,'span',' ');
+		
+		acceptButton.onclick=function(){
+			if(sec.result['masterUsername']==null||sec.result['masterPassword']==null){
+				easyNotify('Must Set Master Credentials');
+			}
+			else if (sec.result['dbtype']==null||sec.result['server']==null||sec.result['database']==null||sec.result['user']==null||sec.result['server']==null||sec.result['pass']==null){
+				easyNotify('Must Set Database Information');
+			}
+			else{
+				saveSettings(function(){
 					location.reload();
-				}
-				else{
-					console.log('LOADPAGE FAILURE');
-					easyNotify('Failed To Save Settings RETURNED ' + JSON.stringify(data));
-				}
+				},function(data){
+					easyNotify('Failed to save settings ' + JSON.stringify(data));
+				});
+			}
+			console.log(sec.result);
+		};
+		testButton.onclick=function(){
+			saveSettings(function(){
+				username=sec.result['masterUsername'];
+				password=sec.result['masterPassword'];
+				//setCredentials(username,password);
+				login(username,password,function(){
+					easyNotify('SUCCESSFULLY LOGGED IN AS MASTER USER');
+					requestFromController('tables',null,function(data){
+							easyNotify('SUCCESSFULLY LISTED ' +data.length+ ' TABLES');
+					},function(data){
+						easyNotify('FAILED TO LIST TABLES (SQL SETUP PROBLEM)' + JSON.stringify(data));
+					});
+				},function(data){
+					easyNotify('FAILED TO LOG IN AS MASTER USER' + JSON.stringify(data));
+				});//function defined in index.php
 			},function(data){
-				easyNotify('FAILED TO Save Settings ' + data);
+				easyNotify('Failed to save settings ' + JSON.stringify(data));
 			});
-		}
-		console.log(sec.result);
-	};
-	testButton.onclick=function(){
-		console.log(JSON.stringify(sec.result));
-	};
+		};
+	}
+	
+	function loadInitialConfigOrDisplay(){
+		postJSON('php/loadsettings.php','username='+username+'&password='+password+'&page=settings',function(data){
+			if (data['SUCCESS']){
+				var initial = JSON.parse(data['RESULT']);
+				sections.forEach(function(section){
+					if (section.hasOwnProperty('name')){
+						if (initial.hasOwnProperty(section['name'])){
+							section['initial']=initial[section['name']];
+						}
+					}
+				});
+				loadPage();
+			}
+			else{
+				loadPage();
+			}
+		},function(data){
+			loadPage();
+		});
+	}
+	
+	loadInitialConfigOrDisplay();
 	
 	
 	

@@ -7,16 +7,25 @@
 global $ret;
 if ($success){
 	$page = safeFilename($params['page']);
-	$root = dirname(__FILE__).'/settings/';
-	$page = $root.$page.'.json';
-			
-	if (file_exists($page)){
-		$ret['RESULT']=file_get_contents($page);
-		$ret['SUCCESS']=true;
+	if ($page=='settings'){//blacklist settings for non admin... a bit hacky tbh
+		if ($seclevel<100){
+			$ret['SECURED']=false;
+			$ret['ERRORS']=array('Security Level Too Low');
+			$success=false;
+		}
 	}
-	else{
-		$ret['RESULT']='<span style="display:block;font-size:2em;">Page <strong>'.$params['page'].'</strong> Unavailable!</span>';
-		$ret['SUCCESS']=false;
+	if ($success){
+		$root = dirname(__FILE__).'/settings/';
+		$page = $root.$page.'.json';
+				
+		if (file_exists($page)){
+			$ret['RESULT']=file_get_contents($page);
+			$ret['SUCCESS']=true;
+		}
+		else{
+			$ret['RESULT']='<span style="display:block;font-size:2em;">Page <strong>'.$params['page'].'</strong> Unavailable!</span>';
+			$ret['SUCCESS']=false;
+		}
 	}
 }
 else{

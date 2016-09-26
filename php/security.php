@@ -18,10 +18,15 @@ function checkAdminLevel($requiredAdminLevel){
 		addMessage('Credential Server Type Not Set');
 		return false;
 	}
-	if (isset($masterUsername)&&isset($masterPassword)&&$username==$masterUsername&&$password==$masterPassword){
-		$seclevel = 10000;
-		$secured = true;
-		return true;
+	if (isset($masterUsername)&&isset($masterPassword)){
+		if ($username==$masterUsername&&$password==$masterPassword){
+			$seclevel = 10000;
+			$secured = true;
+			return true;
+		}
+	}
+	else{
+		addMessage('Master Credentials Not Set');
 	}
 	if ($credentialServerType=='file'){
 		if (file_exists(dirname(__FILE__).'/settings/credentials.json')){

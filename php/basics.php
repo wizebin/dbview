@@ -1,5 +1,9 @@
 <?php include ("conf.php");
-$dberrors = array();$lasterror="";$lastid=null;$lastaffected=null;
+$GLOBALS['dberrors'] = array();$lasterror="";$lastid=null;$lastaffected=null;
+function exception_error_handler($errno, $errstr, $errfile, $errline ) {
+    array_push($GLOBALS['dberrors'],"$errstr ($errno) IN $errfile ON LINE $errline");
+}
+set_error_handler("exception_error_handler");
 function noteError($errString){
 	global $dberrors,$lasterror;
 	$lasterror=$errString;
@@ -30,10 +34,10 @@ function openMYSQL($server, $username, $password, $database = '', $port = null){
 }
 function openPGSQL($server, $username, $password, $database = '', $port = null){
 	$connectionstring = makepgstring($server, $username, $password, $database, $port);
-    $dbh = pg_connect($connectionstring);
-	if ($dbh === false){
-		noteError("Failed to connect to PGSQL: ". pg_last_error());
-	}
+    $dbh = @pg_connect($connectionstring);
+	//if ($dbh === false){
+		//noteError("Failed to connect to PGSQL: ". pg_last_error());
+	//}
 	return $dbh;
 }
 function openMSSQL($server, $username, $password, $database = '', $port = null){
@@ -271,7 +275,10 @@ function listTablesMYSQL($db, $database){
 	return executeMYSQL($db, "SHOW TABLES IN " . $database);
 }
 function listTablesPGSQL($db, $database){
-	return executePGSQL($db, "select * from information_schema.tables where table_schema = 'public' AND table_catalog = '$database';");
+	$catalog='';
+	if ($database!=null)
+		$catalog=" AND table_catalog = '$database'";
+	return executePGSQL($db, "select * from information_schema.tables where table_schema = 'public'$catalog;");
 }
 function listTablesMSSQL($db ,$database){
 	
@@ -597,6 +604,13 @@ function openConf(){
 	global $dbtype,$server,$database,$user,$pass;
 	if (isset($dbtype)&&isset($server)&&isset($database)&&isset($user)&&isset($pass)){
 		return openSQL($dbtype,$server,$user,$pass,$database);
+	}
+	else{
+		if (!isset($dbtype))array_push($GLOBALS['dberrors'],'MISSING dbtype configuration');
+		if (!isset($server)) array_push($GLOBALS['dberrors'],'MISSING server configuration');
+		if (!isset($database)) array_push($GLOBALS['dberrors'],'MISSING database configuration');
+		if (!isset($user)) array_push($GLOBALS['dberrors'],'MISSING database username configuration');
+		if (!isset($pass)) array_push($GLOBALS['dberrors'],'MISSING database password configuration');
 	}
 	return null;
 }

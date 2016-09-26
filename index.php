@@ -11,13 +11,14 @@
 	</head>
 
 	<body>
-		<div id="wrapper"><div style="float:right;padding:3px;"><button onclick="logout()" style="border:none;color:#cc1818;">logout</button></div><a href='/'><img src='resources/logo64.png' style="padding:5px;"></a><div style="position:absolute;right:3px;bottom:3px;white-space:nowrap" id="extraHeader"></div></div>
+		<div id="wrapper"><div style="float:right;padding:3px;whitespace:nowrap;"><span id='extraHeaderButtons'></span> <button onclick="logout()" style="border:none;color:#cc1818;">logout</button></div><a href='/'><img src='resources/logo64.png' style="padding:5px;"></a><div style="position:absolute;right:3px;bottom:3px;white-space:nowrap" id="extraHeader"></div></div>
 		
 		<div id="content"></div>
 	
 		<script>
 			var username = valOrOther(getCookie('username'),'');
 			var password = valOrOther(getCookie('password'),'');
+			var securityLevel = 0;
 			var settings = null;
 			var loggedin = false;
 			
@@ -75,6 +76,8 @@
 					if (data['SUCCESS']){
 						loggedin = true;
 						settings = new Settings('companySettings');
+						if (data.hasOwnProperty('SECURITY_LEVEL'))
+							securityLevel=data['SECURITY_LEVEL'];
 						successCallback&&successCallback(data['RESULT']);
 					}
 					else{
@@ -91,6 +94,12 @@
 			function displayPage(content, parent){
 				if (parent==undefined)parent='content';
 				setElementContentWithScripts(parent,content);
+				if (securityLevel>=100){//admin
+					document.getElementById('extraHeaderButtons').innerHTML="<button onclick='loadAndDisplayPage(\"config\")'>Config</button>";
+				}
+				else{
+					document.getElementById('extraHeaderButtons').innerHTML="";
+				}
 			}
 			
 			function loadAndDisplayPage(pageName, parent){
@@ -180,11 +189,44 @@
 				});
 			}
 			function logout(){
+				securityLevel=0;
 				setCredentials(null,null);
 				displayLoginOrSetup();
 			}
 			
+			//verbs include VERB(required param list)
+	
+			//get(table,idlabel,id)
+			//list(table,filters,sortby,page,pagesize)
+			//update(table,idlabel,id)
+			//create(table,data:json)
+			//delete(table,idlabel,id)
+			//describe(table)
+			//tables(database)
+			//indexes(table)
+			
+			function requestFromController(verb, properties, successCallback, failureCallback){
+				var props = [];
+				var keys = getObjectKeys(properties);
+				keys.forEach(function(key){
+					props.push("&"+encodeURIComponent(key)+"="+encodeURIComponent(properties[key]));
+				},this);
+				
+				var propstring = props.join("");
+				
+				postJSON('php/controller.php','verb='+verb+'&username='+username+'&password='+password+propstring,function(data){
+					if (data['SUCCESS']){
+						successCallback&&successCallback(data['RESULT']);
+					}
+					else{
+						failureCallback&&failureCallback(data);
+					}
+				},function(data){failureCallback&&failureCallback(data);});
+			}
+			
 			smartLogin(true);
+			
+			
 			
 		</script>
 	</body>

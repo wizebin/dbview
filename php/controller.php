@@ -20,167 +20,166 @@
 			$ret['HTTPS']=false;
 		}
 		
-		
 		$db = openConf();
 		
-		$qrey = "";
-		
-		switch($requestMethod){
-			case 'get':
-				//table,idlabel,id
-				
-				$table = escapeIdentifierConf($db, $params['table']);
-				$idlabel = escapeIdentifierConf($db, $params['idlabel']);
-				$id = escapeConf($db, $params['id']);
-				
-				$qrey = "SELECT * FROM $table WHERE $idlabel = $id";
-				$results = executeConf($db, $qrey);
-				
-				//if (is_array($results)){
-					$ret['RESULT']=$results;
-				//}
-				
-				break;
-			case 'list':
-				//table,sortby,filters,pagesize,page
-				
-				$filters = isset($params['filters'])?json_decode($params['filters'],true):array(); // ['id'=>123]
-				$sortby = isset($params['sortby'])?json_decode($params['sortby'],true):array(); //['id'=>'DESC']
-				$page = isset($params['page'])?$params['page']:0;
-				$pagesize = isset($params['pagesize'])?$params['pagesize']:0;
-				$table = escapeIdentifierConf($db, $params['table']);
-				
-				$results = listWithParamsConf($db, $table, $page, $pagesize, $filters, $sortby);
-				
-				//if ($results){
-					$ret['RESULT']=$results;
-					//$ret['LASTQREY']=$GLOBALS['LASTQREY'];
-				//}
-			
-				break;
-			case 'update':
-				//table,idlabel,id,data
-				
-				$table = escapeIdentifierConf($db, $params['table']);
-				$idlabel = escapeIdentifierConf($db, $params['idlabel']);
-				$id = escapeConf($db, $params['id']);
-				
-				$data = json_decode($params['data'],true);
-				
-				$sets = "";
-				
-				if (count($data)>0){
-					$sets = " SET ";
-					$setlist = array();
-					foreach($sortby as $key => $val){
-						array_push($setlist,escapeIdentifierConf($db,$key) . " = " . escapeConf($db,$val));
-					}
-					$sets .= implode(", ",$sortedlist);
-				}
-				
-				$qrey = "UPDATE $table $sets WHERE $idlabel = $id";
-				$results = executeConf($db, $qrey);
-				
-				//if ($results){
-					$ret['RESULT']=$results;
-					$ret['AFFECTED']=$lastaffected;
-				//}
-				
-				break;
-			case 'create':
-				//table,data
-				
-				$table = escapeIdentifierConf($db, $params['table']);
-				
-				$data = json_decode($params['data'],true);
-				
-				$keys = "";
-				$vals = "";
-				
-				if (is_array($data) && count($data)>0){
-					$keylist = array();
-					$vallist = array();
+		if ($db==null){
+			$ret['SUCCESS']=false;
+		}
+		else{
+			switch($requestMethod){
+				case 'get':
+					//table,idlabel,id
 					
-					foreach($data as $key => $val){
-						array_push($keylist,escapeIdentifierConf($db,$key));
-						array_push($vallist,escapeConf($db,$val));
-					}
+					$table = escapeIdentifierConf($db, $params['table']);
+					$idlabel = escapeIdentifierConf($db, $params['idlabel']);
+					$id = escapeConf($db, $params['id']);
 					
-					$keys = implode(",",$keylist);
-					$vals = implode(", ",$vallist);
-				}
-				
-				$qrey = "INSERT INTO $table ($keys) VALUES($vals);";
-				$results = executeConf($db, $qrey);
-				
-				if ($results){
-					$ret['RESULT']=$results;
-					$ret['AFFECTED']=$lastaffected;
-					$ret['ID']=$lastid;
-				}
-				else{
-					$ret['FAILURE']='INSERT FAILED ' . json_encode($results);
-				}
-				
-				break;
-			case 'delete':
-				//table,idlabel,id
-				
-				$table = escapeIdentifierConf($db, $params['table']);
-				$idlabel = escapeIdentifierConf($db, $params['idlabel']);
-				$id = escapeConf($db, $params['id']);
-				
-				$qrey = "DELETE * FROM $table WHERE $idlabel = $id LIMIT 1";
-				$results = executeConf($db, $qrey);
-				
-				//if ($results){
-					$ret['RESULT']=$results;
-					$ret['AFFECTED']=$lastaffected;
-				//}
-				
-				break;
-			case 'describe':
-				$table = escapeIdentifierConf($db, $params['table']);
-				$results = describeTableConf($db, $table);
-				$ret['RESULT']=$results;
-				$ret['AFFECTED']=$lastaffected;
-				break;
-			case 'tables':
-				$database = escapeIdentifierConf($db, $params['database']);
-				$results = listTablesConf($db, $database);
-				$ret['RESULT']=$results;
-				break;
-			case 'indexes':
-				$table = escapeIdentifierConf($db, $params['table']);
-				$results = listIndexedConf($db, $table);
-				$ret['RESULT']=$results;
-				break;
-			case 'arbitrary':
-				//query
-				if ($username=='admin'){
-					$qrey = $params['query'];
+					$qrey = "SELECT * FROM $table WHERE $idlabel = $id";
 					$results = executeConf($db, $qrey);
 					
 					//if (is_array($results)){
 						$ret['RESULT']=$results;
+					//}
+					
+					break;
+				case 'list':
+					//table,sortby,filters,pagesize,page
+					
+					$filters = isset($params['filters'])?json_decode($params['filters'],true):array(); // ['id'=>123]
+					$sortby = isset($params['sortby'])?json_decode($params['sortby'],true):array(); //['id'=>'DESC']
+					$page = isset($params['page'])?$params['page']:0;
+					$pagesize = isset($params['pagesize'])?$params['pagesize']:0;
+					$table = escapeIdentifierConf($db, $params['table']);
+					
+					$results = listWithParamsConf($db, $table, $page, $pagesize, $filters, $sortby);
+					
+					//if ($results){
+						$ret['RESULT']=$results;
+						//$ret['LASTQREY']=$GLOBALS['LASTQREY'];
+					//}
+				
+					break;
+				case 'update':
+					//table,idlabel,id,data
+					
+					$table = escapeIdentifierConf($db, $params['table']);
+					$idlabel = escapeIdentifierConf($db, $params['idlabel']);
+					$id = escapeConf($db, $params['id']);
+					
+					$data = json_decode($params['data'],true);
+					
+					$sets = "";
+					
+					if (count($data)>0){
+						$sets = " SET ";
+						$setlist = array();
+						foreach($sortby as $key => $val){
+							array_push($setlist,escapeIdentifierConf($db,$key) . " = " . escapeConf($db,$val));
+						}
+						$sets .= implode(", ",$sortedlist);
+					}
+					
+					$qrey = "UPDATE $table $sets WHERE $idlabel = $id";
+					$results = executeConf($db, $qrey);
+					
+					//if ($results){
+						$ret['RESULT']=$results;
 						$ret['AFFECTED']=$lastaffected;
 					//}
+					
 					break;
-				}
-			default:
-				$ret['SUCCESS']=false;
-				$ret['FAILURE']='UNKNOWN VERB ' . $requestMethod;
-				break;
+				case 'create':
+					//table,data
+					
+					$table = escapeIdentifierConf($db, $params['table']);
+					
+					$data = json_decode($params['data'],true);
+					
+					$keys = "";
+					$vals = "";
+					
+					if (is_array($data) && count($data)>0){
+						$keylist = array();
+						$vallist = array();
+						
+						foreach($data as $key => $val){
+							array_push($keylist,escapeIdentifierConf($db,$key));
+							array_push($vallist,escapeConf($db,$val));
+						}
+						
+						$keys = implode(",",$keylist);
+						$vals = implode(", ",$vallist);
+					}
+					
+					$qrey = "INSERT INTO $table ($keys) VALUES($vals);";
+					$results = executeConf($db, $qrey);
+					
+					if ($results){
+						$ret['RESULT']=$results;
+						$ret['AFFECTED']=$lastaffected;
+						$ret['ID']=$lastid;
+					}
+					else{
+						$ret['FAILURE']='INSERT FAILED ' . json_encode($results);
+					}
+					
+					break;
+				case 'delete':
+					//table,idlabel,id
+					
+					$table = escapeIdentifierConf($db, $params['table']);
+					$idlabel = escapeIdentifierConf($db, $params['idlabel']);
+					$id = escapeConf($db, $params['id']);
+					
+					$qrey = "DELETE * FROM $table WHERE $idlabel = $id LIMIT 1";
+					$results = executeConf($db, $qrey);
+					
+					//if ($results){
+						$ret['RESULT']=$results;
+						$ret['AFFECTED']=$lastaffected;
+					//}
+					
+					break;
+				case 'describe':
+					$table = escapeIdentifierConf($db, $params['table']);
+					$results = describeTableConf($db, $table);
+					$ret['RESULT']=$results;
+					$ret['AFFECTED']=$lastaffected;
+					break;
+				case 'tables':
+					$database = isset($params['database'])?escapeIdentifierConf($db, $params['database']):null;
+					$results = listTablesConf($db, $database);
+					$ret['RESULT']=$results;
+					break;
+				case 'indexes':
+					$table = escapeIdentifierConf($db, $params['table']);
+					$results = listIndexedConf($db, $table);
+					$ret['RESULT']=$results;
+					break;
+				case 'arbitrary':
+					//query
+					if ($username=='admin'){
+						$qrey = $params['query'];
+						$results = executeConf($db, $qrey);
+						
+						//if (is_array($results)){
+							$ret['RESULT']=$results;
+							$ret['AFFECTED']=$lastaffected;
+						//}
+						break;
+					}
+				default:
+					$ret['SUCCESS']=false;
+					$ret['FAILURE']='UNKNOWN VERB ' . $requestMethod;
+					break;
+			}
+			closeConf($db);
+			$ret['SUCCESS']=true;
 		}
-		
 		if (count($dberrors)>0){
 			$ret["ERRORS"] = $dberrors;
 		}
 		
-		closeConf($db);
-		
-		//$ret['SERVER']=$_SERVER;
-		$ret['SUCCESS']=true;
 	}
 	
 	echo json_encode($ret, JSON_PRETTY_PRINT);

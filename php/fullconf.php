@@ -16,7 +16,7 @@
 		
 		echo("var systemIsConfigured=".($setup?'true':'false').";\n");
 		echo("var systemConfiguredVarIsSet=".(isset($GLOBALS['systemConfigured'])?'true':'false').";\n");
-		$settable = array('rootOfPage','indexedOnly');
+		$settable = array('rootOfPage','indexedOnly','mainTable');
 		foreach($settable as $setting){
 			if (isset($GLOBALS[$setting])){
 				if (is_string($GLOBALS[$setting])){

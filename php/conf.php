@@ -6,7 +6,7 @@ if (!is_dir($SETTINGS_DIR)){
 	mkdir($SETTINGS_DIR,0777,true);//need permissions to create this directory
 }
 
-$allowable = array('indexedOnly','rootOfPage','masterUsername','masterPassword','dbtype','server','database','user','pass','credentialServerType','credentialServer','credentialDatabase','credentialUsername','credentialPassword','credentialTable','credentialUserColumn','credentialPassColumn','credentialAdminColumn','userRO','passRO');
+$allowable = array('indexedOnly','rootOfPage','masterUsername','masterPassword','dbtype','server','database','user','pass','credentialServerType','credentialServer','credentialDatabase','credentialUsername','credentialPassword','credentialTable','credentialUserColumn','credentialPassColumn','credentialAdminColumn','userRO','passRO','mainTable','tableList');
 
 function loadSettings($settingsFilename){
 	global $allowable;

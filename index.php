@@ -113,8 +113,7 @@
 						easyNotify('Failed To Load ' + pageName + ' RETURNED ' + JSON.stringify(data));
 					}
 				},function(data){
-					console.log('FAILED TO LOGIN ' + data);
-					loggedin = false;
+					console.log('FAILED TO LOAD PAGE ' + JSON.stringify(data));
 					failureCallback&&failureCallback(data);
 				});
 			}
@@ -190,6 +189,7 @@
 			}
 			function logout(){
 				securityLevel=0;
+				loggedin=false;
 				setCredentials(null,null);
 				displayLoginOrSetup();
 			}

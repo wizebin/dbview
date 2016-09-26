@@ -5,10 +5,20 @@
 	include "secbase.php";
 ?><?php
 	global $lastid, $lastaffected;
-	
+	if (isset($params['table'])&&isset($GLOBALS['mainTable'])){
+		//in the future check black list for table if we are listing tables
+		//for now just check main table against this table
+		if ($params['table']!=$GLOBALS['mainTable']){
+			$success=false;
+			$ret['FAILURE']='You may only access ' . $GLOBALS['mainTable'];
+		}
+	}
 	if ($success){
+		
+		
+	
 		//$seclevel = current security level
-		$requestMethod = $params['verb'];	//FAKING REQUEST METHOD, use $_SERVER['REQUEST_METHOD'];
+		$requestMethod = $params['verb'];
 		
 		$requestScheme = $_SERVER['REQUEST_SCHEME'];//http or https
 		$remoteAddress = $_SERVER['REMOTE_ADDR'];//requester IP
@@ -39,6 +49,7 @@
 					//if (is_array($results)){
 						$ret['RESULT']=$results;
 					//}
+					$ret['SUCCESS']=true;
 					
 					break;
 				case 'list':
@@ -56,6 +67,7 @@
 						$ret['RESULT']=$results;
 						//$ret['LASTQREY']=$GLOBALS['LASTQREY'];
 					//}
+					$ret['SUCCESS']=true;
 				
 					break;
 				case 'update':
@@ -85,6 +97,7 @@
 						$ret['RESULT']=$results;
 						$ret['AFFECTED']=$lastaffected;
 					//}
+					$ret['SUCCESS']=true;
 					
 					break;
 				case 'create':
@@ -117,26 +130,34 @@
 						$ret['RESULT']=$results;
 						$ret['AFFECTED']=$lastaffected;
 						$ret['ID']=$lastid;
+						$ret['SUCCESS']=true;
 					}
 					else{
 						$ret['FAILURE']='INSERT FAILED ' . json_encode($results);
+						$ret['SUCCESS']=false;
 					}
 					
 					break;
 				case 'delete':
 					//table,idlabel,id
-					
-					$table = escapeIdentifierConf($db, $params['table']);
-					$idlabel = escapeIdentifierConf($db, $params['idlabel']);
-					$id = escapeConf($db, $params['id']);
-					
-					$qrey = "DELETE * FROM $table WHERE $idlabel = $id LIMIT 1";
-					$results = executeConf($db, $qrey);
-					
-					//if ($results){
-						$ret['RESULT']=$results;
-						$ret['AFFECTED']=$lastaffected;
-					//}
+					if ($seclevel>=100){
+						$table = escapeIdentifierConf($db, $params['table']);
+						$idlabel = escapeIdentifierConf($db, $params['idlabel']);
+						$id = escapeConf($db, $params['id']);
+						
+						$qrey = "DELETE * FROM $table WHERE $idlabel = $id LIMIT 1";
+						$results = executeConf($db, $qrey);
+						
+						//if ($results){
+							$ret['RESULT']=$results;
+							$ret['AFFECTED']=$lastaffected;
+						//}
+						$ret['SUCCESS']=true;
+					}
+					else{
+						$ret['SUCCESS']=false;
+						$ret['FAILURE']='Security Level Too Low';
+					}
 					
 					break;
 				case 'describe':
@@ -144,20 +165,23 @@
 					$results = describeTableConf($db, $table);
 					$ret['RESULT']=$results;
 					$ret['AFFECTED']=$lastaffected;
+					$ret['SUCCESS']=true;
 					break;
 				case 'tables':
 					$database = isset($params['database'])?escapeIdentifierConf($db, $params['database']):null;
 					$results = listTablesConf($db, $database);
 					$ret['RESULT']=$results;
+					$ret['SUCCESS']=true;
 					break;
 				case 'indexes':
 					$table = escapeIdentifierConf($db, $params['table']);
 					$results = listIndexedConf($db, $table);
 					$ret['RESULT']=$results;
+					$ret['SUCCESS']=true;
 					break;
 				case 'arbitrary':
 					//query
-					if ($username=='admin'){
+					if ($username==$masterUsername){
 						$qrey = $params['query'];
 						$results = executeConf($db, $qrey);
 						
@@ -173,7 +197,6 @@
 					break;
 			}
 			closeConf($db);
-			$ret['SUCCESS']=true;
 		}
 		if (count($dberrors)>0){
 			$ret["ERRORS"] = $dberrors;

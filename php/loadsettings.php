@@ -7,7 +7,7 @@
 global $ret;
 if ($success){
 	$page = safeFilename($params['page']);
-	if ($page=='settings'){//blacklist settings for non admin... a bit hacky tbh
+	if ($page=='settings'||$page=='credentials'){//blacklist settings for non admin... a bit hacky tbh
 		if ($seclevel<100){
 			$ret['SECURED']=false;
 			$ret['ERRORS']=array('Security Level Too Low');

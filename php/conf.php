@@ -1,6 +1,7 @@
 <?php
 $SETTINGS_DIR = dirname(__FILE__).'/settings/';
 $SETTINGS_FILE = $SETTINGS_DIR.'settings.json';
+$USING_ENVIRONMENT = false;
 
 if (!is_dir($SETTINGS_DIR)){
 	mkdir($SETTINGS_DIR,0600,true);
@@ -8,7 +9,25 @@ if (!is_dir($SETTINGS_DIR)){
 
 $allowable = array('indexedOnly','rootOfPage','masterUsername','masterPassword','dbtype','server','database','user','pass','credentialServerType','credentialServer','credentialDatabase','credentialUsername','credentialPassword','credentialTable','credentialUserColumn','credentialPassColumn','credentialAdminColumn','userRO','passRO','mainTable','tableList');
 
+function camelToUnderscore ($camel){
+	return ltrim(strtoupper(preg_replace('/[A-Z]+/', '_$0', $camel)), '_');
+}
+function loadEnvironmentSettings(){
+	global $allowable, $USING_ENVIRONMENT;
+	$settings = array();
+	foreach($allowable as $setting){
+		$env = getenv(camelToUnderscore($setting));
+		if ($env !== false){
+			$settings[$setting] = $env;
+			$GLOBALS[$setting] = $env;
+			$USING_ENVIRONMENT = true;
+		}
+	}
+	return $settings;
+}
+
 function loadSettings($settingsFilename){
+	$settingsFilename = $settingsFilename != null? $settingsFilename : $SETTINGS_FILE;
 	global $allowable;
 	$settings = array();
 	$GLOBALS['cwd']=getcwd();
@@ -31,9 +50,21 @@ function loadSettings($settingsFilename){
 			}
 		}
 	}
-	
+	return $settings;
 }
-function saveSettings($settingsFilename){
+function loadEnvirontmentOrFileSettings($filename = null){
+	$ret = loadEnvironmentSettings();
+
+	if (count($ret) == 0){
+		$ret = loadSettings();
+	}
+	else{
+		$GLOBALS['systemConfigured']=true;
+	}
+	return $ret;
+}
+function saveSettings($settingsFilename = null){
+	$settingsFilename = $settingsFilename != null? $settingsFilename : $SETTINGS_FILE;
 	global $allowable;
 	$buffer = array();
 	foreach($allowable as $val){
@@ -47,6 +78,7 @@ function saveSettings($settingsFilename){
 	file_put_contents($settingsFilename,json_encode($buffer,JSON_PRETTY_PRINT));
 }
 
-loadSettings($SETTINGS_FILE);
+loadEnvirontmentOrFileSettings();
+
 //saveSettings($SETTINGS_FILE);
 ?>

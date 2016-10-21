@@ -35,7 +35,8 @@ RUN apt-get update && apt-get -y install \
     php5-curl \
     php5-mcrypt \
     php5-gd \
-    php5-redis
+    php5-redis \
+    php5-pgsql
 
 # Turn off daemon mode
 # Reference: http://stackoverflow.com/questions/18861300/how-to-run-nginx-within-docker-container-without-halting
@@ -49,12 +50,13 @@ RUN mv /etc/nginx/sites-available/default /etc/nginx/sites-available/default.ori
 RUN perl -pi -e 's/;cgi.fix_pathinfo=1/cgi.fix_pathinfo=0/g' /etc/php5/fpm/php.ini
 RUN perl -pi -e 's/allow_url_fopen = Off/allow_url_fopen = On/g' /etc/php5/fpm/php.ini
 RUN perl -pi -e 's/expose_php = On/expose_php = Off/g' /etc/php5/fpm/php.ini
+RUN perl -pi -e 's/display_errors = Off/display_errors = On/g' /etc/php5/fpm/php.ini
 
 # Copy default site conf
 COPY default.conf /etc/nginx/sites-available/default
 
 # Copy the index.php file
-#COPY index.php /var/www/html/index.php
+#ADD . /var/www/html/
 
 # Mount volumes
 VOLUME ["/etc/nginx/certs", "/etc/nginx/conf.d", "/var/www/html"]
@@ -65,8 +67,17 @@ CMD service php5-fpm start && nginx
 # Set the current working directory
 WORKDIR /var/www/html
 
-# Expose port 80
-EXPOSE 80
-EXPOSE 443
+# Expose port 8080
+EXPOSE 8080
 
+ENV DBVIEW_INDEXED_ONLY 1
+ENV DBVIEW_MASTER_USERNAME admin
+ENV DBVIEW_MASTER_PASSWORD dispatch
+ENV DBVIEW_DBTYPE pgsql
+ENV DBVIEW_SERVER localhost
+ENV DBVIEW_DATABASE dispatch
+ENV DBVIEW_USER dispatch
+ENV DBVIEW_PASS confluence
+ENV DBVIEW_CREDENTIAL_SERVER_TYPE file
+ENV DBVIEW_MAIN_TABLE eventbus_events
 ENV DBVIEW_SERVER localhost

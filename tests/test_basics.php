@@ -1,5 +1,5 @@
 <?php
-	include("../php/basics.php");
+	include_once("../php/basics.php");
 	
 	function getNS(){
 		return round(microtime(true) * 100000);

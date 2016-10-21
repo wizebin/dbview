@@ -238,6 +238,7 @@
 		postJSON('php/loadsettings.php','username='+username+'&password='+password+'&page=settings',function(data){
 			if (data['SUCCESS']){
 				var initial = JSON.parse(data['RESULT']);
+				console.log(initial);
 				sections.forEach(function(section){
 					if (section.hasOwnProperty('name')){
 						if (initial.hasOwnProperty(section['name'])){

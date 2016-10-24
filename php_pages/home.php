@@ -513,6 +513,7 @@
 		tableView.loadModelFromServer(mainTable,false,function(){
 			tableView.display(document.getElementById('tableView'));
 		},function(data){
+			tableView.display(document.getElementById('tableView'));
 			easyNotify('failed to load table ' + JSON.stringify(data));
 		});
 	}

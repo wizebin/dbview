@@ -4,6 +4,7 @@
 	$required=array('verb');
 	include "secbase.php";
 ?><?php
+	$ret = array();
 	global $lastid, $lastaffected;
 	if (isset($params['table'])&&isset($GLOBALS['mainTable'])){
 		//in the future check black list for table if we are listing tables
@@ -14,8 +15,6 @@
 		}
 	}
 	if ($success){
-		
-		
 	
 		//$seclevel = current security level
 		$requestMethod = $params['verb'];

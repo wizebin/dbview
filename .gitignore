@@ -1,6 +1,6 @@
 php/settings.json
 php/settings/*.json
-
+Dockerfile
 
 # Compiled source #
 ###################

@@ -1,4 +1,4 @@
-<?php include ("conf.php");
+<?php include_once ("conf.php");
 $GLOBALS['dberrors'] = array();$lasterror="";$lastid=null;$lastaffected=null;
 function exception_error_handler($errno, $errstr, $errfile, $errline ) {
     array_push($GLOBALS['dberrors'],"$errstr ($errno) IN $errfile ON LINE $errline");

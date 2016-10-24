@@ -2,6 +2,7 @@
 $SETTINGS_DIR = dirname(__FILE__).'/settings/';
 $SETTINGS_FILE = $SETTINGS_DIR.'settings.json';
 $USING_ENVIRONMENT = false;
+$ENVIRONMENT_PREFIX = "DBVIEW_";
 
 if (!is_dir($SETTINGS_DIR)){
 	mkdir($SETTINGS_DIR,0600,true);
@@ -13,10 +14,10 @@ function camelToUnderscore ($camel){
 	return ltrim(strtoupper(preg_replace('/[A-Z]+/', '_$0', $camel)), '_');
 }
 function loadEnvironmentSettings(){
-	global $allowable, $USING_ENVIRONMENT;
+	global $allowable, $USING_ENVIRONMENT, $ENVIRONMENT_PREFIX;
 	$settings = array();
 	foreach($allowable as $setting){
-		$env = getenv(camelToUnderscore($setting));
+		$env = getenv($ENVIRONMENT_PREFIX . camelToUnderscore($setting));
 		if ($env !== false){
 			$settings[$setting] = $env;
 			$GLOBALS[$setting] = $env;

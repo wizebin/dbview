@@ -18,7 +18,8 @@ RUN apt-get update && apt-get -y install \
     mcrypt \
     build-essential \
     tcl8.5 \
-    git
+    git \
+    python
 
 # Download Nginx signing key
 RUN apt-key adv --recv-keys --keyserver keyserver.ubuntu.com C300EE8C
@@ -54,9 +55,16 @@ RUN perl -pi -e 's/display_errors = Off/display_errors = On/g' /etc/php5/fpm/php
 
 # Copy default site conf
 COPY default.conf /etc/nginx/sites-available/default
+COPY configurator.py /var/www/html/
+COPY Dockerfile /tmp/Dockerfile
 
 # Copy the index.php file
 #ADD . /var/www/html/
+
+# Set the current working directory
+WORKDIR /var/www/html
+
+RUN python configurator.py /tmp/Dockerfile /etc/nginx/sites-available/default
 
 # Mount volumes
 VOLUME ["/etc/nginx/certs", "/etc/nginx/conf.d", "/var/www/html"]
@@ -64,20 +72,5 @@ VOLUME ["/etc/nginx/certs", "/etc/nginx/conf.d", "/var/www/html"]
 # Boot up Nginx, and PHP5-FPM when container is started
 CMD service php5-fpm start && nginx
 
-# Set the current working directory
-WORKDIR /var/www/html
-
 # Expose port 8080
 EXPOSE 8080
-
-ENV DBVIEW_INDEXED_ONLY 1
-ENV DBVIEW_MASTER_USERNAME admin
-ENV DBVIEW_MASTER_PASSWORD dispatch
-ENV DBVIEW_DBTYPE pgsql
-ENV DBVIEW_SERVER localhost
-ENV DBVIEW_DATABASE dispatch
-ENV DBVIEW_USER dispatch
-ENV DBVIEW_PASS confluence
-ENV DBVIEW_CREDENTIAL_SERVER_TYPE file
-ENV DBVIEW_MAIN_TABLE eventbus_events
-ENV DBVIEW_SERVER localhost
